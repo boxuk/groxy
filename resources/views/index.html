@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Groxy</title>
+        <link rel="stylesheet" type="text/css" href="/assets/bootstrap/css/bootstrap.css" />
+    </head>
+    <body>
+        <div class="container">
+
+            <div class="row">
+                <div class="span12">
+                    <h1>Genko</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="span12">
+
+                    <h2>Show Inbox</h2>
+
+                    <form method="get" action="/api/inbox" class="form-horizontal">
+
+                        <div class="control-group">
+                            <label class="control-label">Email:</label>
+                            <div class="controls">
+                                <input type="text" name="email" value="boxuk1@yates-assoc.com" />
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">Access Token:</label>
+                            <div class="controls">
+                                <input type="text" name="access_token" value="" />
+                            </div>
+                        </div>
+
+                        <input type="submit" class="btn btn-primary" value="Show Inbox" />
+
+                    </form>
+
+                    <h2>Show Message</h2>
+
+                    <form method="get" action="/api/message" class="form-horizontal">
+
+                        <div class="control-group">
+                            <label class="control-label">Email:</label>
+                            <div class="controls">
+                                <input type="text" name="email" value="boxuk1@yates-assoc.com" />
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">Access Token:</label>
+                            <div class="controls">
+                                <input type="text" name="access_token" value="" />
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">Message ID:</label>
+                            <div class="controls">
+                                <input type="text" name="message_id" value="" />
+                            </div>
+                        </div>
+
+                        <input type="submit" class="btn btn-primary" value="Show Inbox" />
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+    </body>
+</html>
