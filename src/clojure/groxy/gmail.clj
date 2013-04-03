@@ -11,8 +11,7 @@
 (def GMAIL_IMAP_HOST "imap.gmail.com")
 (def GMAIL_IMAP_PORT 993)
 
-(defn- ^{:doc "Returns the Properties object for configuring an IMAP session."}
-  imap-properties [token]
+(defn- imap-properties [token]
   (let [props (Properties.)]
      (doto props
       (.put "mail.imaps.sasl.enable" "true")
@@ -20,24 +19,19 @@
       (.put OAuth2SaslClientFactory/OAUTH_TOKEN_PROP token))
     props))
 
-(defn- connect-store [store email]
-  (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email "")
-  store)
-
-(defn- ^{:doc "Returns an IMAP store that can be used to fetch messages from Gmail."}
-  imap-store [email token]
+(defn- imap-store [email token]
   (let [props (imap-properties token)
         session (Session/getInstance props)
         store (IMAPSSLStore. session nil)]
-    (connect-store store email)))
+    (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email "")
+    store))
 
-(defn- ^ {:doc "Converts an IMAPAddress to a map"}
-  email2map [email]
-  {:address (.toString email)})
+(defn- content-type [part]
+  (let [ct (.getContentType part)]
+    (.toLowerCase (.substring ct 0 (.indexOf ct ";")))))
 
 (defn- is-plain-text [msg]
-  (re-matches #"TEXT/PLAIN;.*"
-              (.toUpperCase (.getContentType msg))))
+  (= "text/plain" (content-type msg)))
 
 (defn- mime-parts [msg]
   (let [multipart (.getContent msg)]
@@ -53,10 +47,6 @@
         (.getContent part)
         "")))
 
-(defn- attachment2map [attachment]
-  {:name (.getDescription attachment)
-   :content-type (.getContentType attachment)})
-
 (defn- message-attachments [msg]
   (if (is-plain-text msg)
     []
@@ -64,8 +54,14 @@
          (filter (complement is-plain-text))
          (map attachment2map))))
 
-(defn- ^ {:doc "Converts an IMAPMessage to a map"}
-  message2map [msg]
+(defn- email2map [email]
+  {:address (.toString email)})
+
+(defn- attachment2map [attachment]
+  {:name (.getDescription attachment)
+   :content-type (content-type attachment)})
+
+(defn- message2map [msg]
   {:subject (.getSubject msg)
    :from (email2map (first (.getFrom msg)))
    :message-id (.getMessageID msg)
