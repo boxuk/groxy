@@ -45,7 +45,9 @@
     (.toLowerCase (.substring ct 0 (.indexOf ct ";")))))
 
 (defn- is-plain-text [msg]
-  (= "text/plain" (content-type msg)))
+  (let [ct (content-type msg)]
+    (or (= "text/plain" ct)
+        (= "text/html" ct))))
 
 (defn- mime-parts [msg]
   (let [multipart (.getContent msg)]
@@ -69,7 +71,8 @@
 (defn- attachment2map [with-data attachment]
   {:name (.getDescription attachment)
    :content-type (content-type attachment)
-   :data (util/base64 attachment)})
+   :data (if with-data
+           (util/base64 attachment))})
 
 (defn- message-attachments [msg & [with-data]]
   (if (is-plain-text msg)
