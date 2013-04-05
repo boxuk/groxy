@@ -1,8 +1,9 @@
 
 # Groxy
 
-A JSON API proxy for talking to the Gmail API.  Allows using persistent IMAP connections
-for non-resident scripting languages.
+A JSON API proxy for talking to Gmail.  Allows using persistent IMAP connections for non-resident scripting languages.
+
+There is (http://boxuk.github.com/groxy/)[literate documentation] available.
 
 ## Usage
 
