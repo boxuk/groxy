@@ -5,6 +5,12 @@ A JSON API proxy for talking to Gmail.  Allows using persistent IMAP connections
 
 There is [literate documentation](http://boxuk.github.com/groxy/) available.
 
+### Disclaimer
+
+At the moment it _seems_ this only works with Gmail accounts that are part of a
+Google Apps for Business domain.  But I can't find any documentation to indicate that
+this shouldn't work with normal Gmail accounts.  So YMMV.
+
 ## Usage
 
 Clone the repo and start the application.
