@@ -61,11 +61,13 @@ public class GmailSearchCommand implements IMAPFolder.ProtocolCommand
     protected GmailSearchResponse parseSearchResponse(final Response response)
     {
         final GmailSearchResponse res = new GmailSearchResponse();
-        final String idString = response.toString().substring(9);
-        final String ids[] = idString.split(" ");
+        final String idString = response.toString();
         
-        for (final String id : ids) {
-            res.add(Integer.parseInt(id));
+        if (idString.length() > 8) {
+            final String ids[] = idString.substring(9).split(" ");
+            for (final String id : ids) {
+                res.add(Integer.parseInt(id));
+            }
         }
         
         return res;
