@@ -1,6 +1,7 @@
 
 (ns groxy.gmail
   (:require [groxy.data :as data]
+            [groxy.util :as util]
             [clojure.string :as string])
   (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
            (java.util Properties)
@@ -65,16 +66,17 @@
     {:name (string/trim from)
      :address address}))
 
-(defn- attachment2map [with-content attachment]
+(defn- attachment2map [with-data attachment]
   {:name (.getDescription attachment)
-   :content-type (content-type attachment)})
+   :content-type (content-type attachment)
+   :data (util/base64 attachment)})
 
-(defn- message-attachments [msg & [with-content]]
+(defn- message-attachments [msg & [with-data]]
   (if (is-plain-text msg)
     []
     (->> (mime-parts msg)
          (filter (complement is-plain-text))
-         (map (partial attachment2map with-content)))))
+         (map (partial attachment2map with-data)))))
 
 (defn- message2map [msg & options]
   {:subject (.getSubject msg)
@@ -82,7 +84,8 @@
    :id (.getMessageNumber msg)
    :body (message-body msg)
    :attachments (message-attachments msg
-                                     (get options :with-attachments false))})
+                                     (get (apply hash-map options)
+                                          :with-attachment-data false))})
 
 (defn- id2message [folder message-id]
   (.getMessage folder message-id))
@@ -110,11 +113,13 @@
     (.open folder (Folder/READ_ONLY))
     folder))
 
-(defn id2message [folder message-id]
-  (.getMessage folder message-id))
-
 ;; Public
 ;; ------
+
+(defn message [email token id]
+  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
+    (message2map (id2message all-mail id)
+                 :with-attachment-data true)))
 
 (defn search [email token query]
   (let [all-mail (folder-for email token FOLDER_ALLMAIL)

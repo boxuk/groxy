@@ -8,7 +8,6 @@
                  [enlive "1.0.1"]
                  [confo "0.1.1"]
                  [javax.mail/mail "1.4.7"]
-                 [com.sun.mail/gimap "1.4.7"]
                  [cheshire "5.0.2"]]
   :plugins [[lein-marginalia "0.7.1"]]
   :source-paths ["src/clojure" "resources/views"]

@@ -11,10 +11,12 @@
             [cheshire.core :as json])
   (:import (javax.mail AuthenticationFailedException)))
 
-(deftemplate
-  layout "index.html"
-  [title]
-  [:title] (content title))
+(defmacro with-gmail [& body]
+  `(try
+     (let [body# (doall ~@body)]
+       (json-response body#))
+     (catch AuthenticationFailedException e#
+         (json-response 403 (.getMessage e#)))))
 
 (defn json-response
   ([content] (json-response 200 content))
@@ -23,27 +25,44 @@
      :content-type "application/json"
      :body (json/generate-string content)}))
 
-(defn index-page [req]
+(defn params-for [req]
+  (let [params (:params req) ]
+    [(:email params)
+     (:access_token params)
+     (:query params)]))
+
+;; WWW Pages
+;; ---------
+
+(deftemplate
+  layout "index.html"
+  [title]
+  [:title] (content title))
+
+(defn page-index [req]
   (layout "Home"))
 
-(defn api-search [req]
-  (let [params (:params req)
-        email (:email params)
-        token (:access_token params)
-        query (:query params)]
-    (try
-      (json-response (gmail/search email token query))
-      (catch AuthenticationFailedException e
-        (json-response 403 (.getMessage e))))))
+;; API Handlers
+;; ------------
 
 (defn api-stats [req]
   (json-response (stats/server)))
 
+(defn api-search [req]
+  (let [[email token query] (params-for req)]
+    (with-gmail
+      (gmail/search email token query))))
+
 (defn api-message [id req]
-  (json-response "Unimplemented"))
+  (let [[email token] (params-for req)]
+    (with-gmail
+      (gmail/message email token (Integer/parseInt id)))))
+
+;; Routes
+;; ------
 
 (defroutes app-routes
-  (GET "/" [] index-page)
+  (GET "/" [] page-index)
   (context "/api" []
     (GET "/" [] api-stats)
     (GET "/messages" [] api-search)
