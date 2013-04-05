@@ -3132,37 +3132,52 @@ net.brehaut.ClojureTools = (function (SH) {
   (let [store (store-for email token)
         folder (.getFolder store folder-name)]
     (.open folder (Folder/READ_ONLY))
-    folder))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn message [email token id]
-  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
-    (message2map (id2message all-mail id)
-                 :with-attachment-data true)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn search [email token query]
+    folder))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- search-for [email token query]
   (let [all-mail (folder-for email token FOLDER_ALLMAIL)
         search (GmailSearchCommand. FOLDER_ALLMAIL query)
         response (.doCommand all-mail search)
         ids (take MAX_SEARCH_RESULTS (.getMessageIds response))
         msgs (map (partial id2message all-mail) ids)]
-    (map message2map msgs)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn inbox [email token]
-  (let [inbox (folder-for email token FOLDER_INBOX)
-        msgs (.getMessages inbox)
-        profile (doto (FetchProfile.)
-                  (.add (FetchProfile$Item/ENVELOPE)))]
-    (.fetch inbox msgs profile)
-    (map message2map msgs)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.stats" name="groxy.stats"><h1 class="project-name">groxy.stats</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+    (doall
+      (map message2map msgs))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- message-for [email token id]
+  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
+    (message2map (id2message all-mail id)
+                 :with-attachment-data true)))</pre></td></tr><tr><td class="docs"><h2>Concurrency Handling</h2>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmacro wait-for [ref-store id &amp; body]
+  `(if-let [waiting# (get-in (deref ~ref-store) ~id)]
+     @waiting#
+     (let [worker# (future ~@body)]
+       (dosync
+         (alter ~ref-store assoc-in ~id worker#))
+       (let [result# (deref worker#)]
+         (dosync
+           (alter ~ref-store assoc-in ~id nil))
+         result#))))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn message [email token id]
+  (wait-for
+    data/stores
+    [email :messages id]
+    (message-for email token id)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn search [email token query]
+  (wait-for
+    data/stores
+    [email :search query]
+    (search-for email token query)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.stats" name="groxy.stats"><h1 class="project-name">groxy.stats</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns groxy.stats
   (:require [groxy.data :as data])
   (:import (java.lang.management ManagementFactory RuntimeMXBean)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn store2map [k v]
   {:email k
-   :connected (.isConnected v)})</pre></td></tr><tr><td class="docs">
+   :connected (.isConnected (:store v))})</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn store-summary []
   (let [stores @data/stores]
     (map store2map
          (keys stores)
-         (map :store (vals stores)))))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
+         (vals stores))))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn server []
   (let [rt (Runtime/getRuntime)]
