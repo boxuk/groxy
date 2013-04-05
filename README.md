@@ -18,6 +18,8 @@ You can then browse the web application at:
 http://localhost:4545
 ```
 
+![](http://github.com/boxuk/groxy/raw/master/images/www.png)
+
 ## Endpoints
 
 ### API Status
