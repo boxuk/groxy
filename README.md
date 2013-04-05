@@ -71,3 +71,13 @@ lein javac
 
 They will be built automatically once though when running the project (or via REPL).
 
+## Documentation
+
+Documentation can be generated with Marginalia via Leiningen:
+
+```
+lein marg
+```
+
+And is then available in the _docs_ folder.
+

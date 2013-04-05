@@ -18,6 +18,9 @@
 (def FOLDER_INBOX "Inbox")
 (def FOLDER_ALLMAIL "[Gmail]/All Mail")
 
+;; IMAP
+;; ----
+
 (defn- imap-properties [token]
   (let [props (Properties.)]
      (doto props
@@ -32,6 +35,9 @@
         store (IMAPSSLStore. session nil)]
     (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email "")
     store))
+
+;; Message Parsing
+;; ---------------
 
 (defn- content-type [part]
   (let [ct (.getContentType part)]
@@ -59,23 +65,30 @@
     {:name (string/trim from)
      :address address}))
 
-(defn- attachment2map [attachment]
+(defn- attachment2map [with-content attachment]
   {:name (.getDescription attachment)
    :content-type (content-type attachment)})
 
-(defn- message-attachments [msg]
+(defn- message-attachments [msg & [with-content]]
   (if (is-plain-text msg)
     []
     (->> (mime-parts msg)
          (filter (complement is-plain-text))
-         (map attachment2map))))
+         (map (partial attachment2map with-content)))))
 
-(defn- message2map [msg]
+(defn- message2map [msg & options]
   {:subject (.getSubject msg)
    :from (email2map (first (.getFrom msg)))
-   :message-id (.getMessageID msg)
+   :id (.getMessageNumber msg)
    :body (message-body msg)
-   :attachments (message-attachments msg)})
+   :attachments (message-attachments msg
+                                     (get options :with-attachments false))})
+
+(defn- id2message [folder message-id]
+  (.getMessage folder message-id))
+
+;; Store/Folder Handling
+;; ---------------------
 
 (defn- new-store-for [email token]
   (let [new-store (imap-store email token)]
