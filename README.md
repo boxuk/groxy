@@ -12,7 +12,7 @@ Clone the repo and start the application.
 lein run
 ```
 
-You cna then browse the web application at:
+You can then browse the web application at:
 
 ```
 http://localhost:4545
@@ -26,13 +26,28 @@ http://localhost:4545
 GET /api
 ```
 
-### Inbox List
+### Searching
 
 ```
-GET /api/inbox
+GET /api/messages
 ```
 
 With parameters:
+
+```
+email - Your Gmail email address
+access_token - A valid OAuth access token
+query - Your query string (supports X-GM-RAW extension)
+```
+
+### Messages
+
+```
+GET /api/messages/:id
+```
+
+Where _:id_ is the ID of the message you want to fetch.  You will also need 
+specify the specified parameters.
 
 ```
 email - Your Gmail email address
@@ -44,4 +59,15 @@ access_token - A valid OAuth access token
 Obtaining and refreshing access tokens is not handled by Groxy, you need to do this yourself.
 If you make a request with an invalid access token you'll receive a 403 response, which is 
 your notification to refresh your token and try again.
+
+## Java Classes
+
+The library uses some Java classes to implement the custom Gmail X-GM-RAW IMAP extension.
+There are stored in _src/java_.  You can compile these on their own using Leiningen.
+
+```
+lein javac
+```
+
+They will be built automatically once though when running the project (or via REPL).
 

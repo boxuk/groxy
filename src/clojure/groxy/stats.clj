@@ -7,11 +7,11 @@
   {:email k
    :connected (.isConnected v)})
 
-(defn stores []
+(defn store-summary []
   (let [stores @data/stores]
     (map store2map
          (keys stores)
-         (vals stores))))
+         (map :store (vals stores)))))
 
 ;; Public
 ;; ------
@@ -23,5 +23,5 @@
               :free (.freeMemory rt)
               :max (.maxMemory rt)
               :used (- (.totalMemory rt) (.freeMemory rt))}
-     :stores (stores)}))
+     :stores (store-summary)}))
 

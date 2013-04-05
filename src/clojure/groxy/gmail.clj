@@ -1,15 +1,22 @@
 
 (ns groxy.gmail
-  (:require [groxy.data :as data])
+  (:require [groxy.data :as data]
+            [clojure.string :as string])
   (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
            (java.util Properties)
            (javax.mail Session Folder FetchProfile FetchProfile$Item)
-           (com.sun.mail.imap IMAPSSLStore)))
+           (com.sun.mail.imap IMAPSSLStore)
+           (com.boxuk.groxy GmailSearchCommand)))
 
 (OAuth2Authenticator/initialize)
 
 (def GMAIL_IMAP_HOST "imap.gmail.com")
 (def GMAIL_IMAP_PORT 993)
+
+(def MAX_SEARCH_RESULTS 20)
+
+(def FOLDER_INBOX "Inbox")
+(def FOLDER_ALLMAIL "[Gmail]/All Mail")
 
 (defn- imap-properties [token]
   (let [props (Properties.)]
@@ -47,19 +54,21 @@
         (.getContent part)
         "")))
 
+(defn- email2map [email]
+  (let [[_ from address] (re-matches #"(.*)?<(.*)>" (.toString email))]
+    {:name (string/trim from)
+     :address address}))
+
+(defn- attachment2map [attachment]
+  {:name (.getDescription attachment)
+   :content-type (content-type attachment)})
+
 (defn- message-attachments [msg]
   (if (is-plain-text msg)
     []
     (->> (mime-parts msg)
          (filter (complement is-plain-text))
          (map attachment2map))))
-
-(defn- email2map [email]
-  {:address (.toString email)})
-
-(defn- attachment2map [attachment]
-  {:name (.getDescription attachment)
-   :content-type (content-type attachment)})
 
 (defn- message2map [msg]
   {:subject (.getSubject msg)
@@ -71,29 +80,42 @@
 (defn- new-store-for [email token]
   (let [new-store (imap-store email token)]
     (dosync
-      (alter data/stores assoc-in [email] new-store))
+      (alter data/stores assoc-in [email :store] new-store))
     new-store))
 
 (defn- store-for [email token]
-  (if-let [store (get-in @data/stores [email])]
+  (if-let [store (get-in @data/stores [email :store])]
     (if (.isConnected store)
         store
         (doall (.close store)
                (new-store-for email token)))
     (new-store-for email token)))
 
+(defn- folder-for [email token folder-name]
+  (let [store (store-for email token)
+        folder (.getFolder store folder-name)]
+    (.open folder (Folder/READ_ONLY))
+    folder))
+
+(defn id2message [folder message-id]
+  (.getMessage folder message-id))
+
 ;; Public
 ;; ------
 
-(defn ^ {:doc "Return the Gmail inbox"}
-  inbox [email token]
-  (let [store (store-for email token)
-        folder (.getFolder store "Inbox")]
-    (.open folder (Folder/READ_ONLY))
-    (let [msgs (.getMessages folder)
-          profile (FetchProfile.)]
-      (.add profile (FetchProfile$Item/ENVELOPE))
-      (.add profile (FetchProfile$Item/CONTENT_INFO))
-      (.fetch folder msgs profile)
-      (map message2map msgs))))
+(defn search [email token query]
+  (let [all-mail (folder-for email token FOLDER_ALLMAIL)
+        search (GmailSearchCommand. query)
+        response (.doCommand all-mail search)
+        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))
+        msgs (map (partial id2message all-mail) ids)]
+    (map message2map msgs)))
+
+(defn inbox [email token]
+  (let [inbox (folder-for email token FOLDER_INBOX)
+        msgs (.getMessages inbox)
+        profile (doto (FetchProfile.)
+                  (.add (FetchProfile$Item/ENVELOPE)))]
+    (.fetch inbox msgs profile)
+    (map message2map msgs)))
 

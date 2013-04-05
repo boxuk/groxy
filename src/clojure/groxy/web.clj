@@ -13,39 +13,41 @@
 
 (deftemplate
   layout "index.html"
-  [title body]
-  [:title] (content title)
-  [:.content] (substitute body))
+  [title]
+  [:title] (content title))
 
-(defn json-response [content]
-  {:status 200
-   :content-type "application/json"
-   :body (json/generate-string content)})
-
-(defn access-denied-response [message]
-  {:status 403
-   :body message})
+(defn json-response
+  ([content] (json-response 200 content))
+  ([status content]
+    {:status status
+     :content-type "application/json"
+     :body (json/generate-string content)}))
 
 (defn index-page [req]
-  (layout "Home" ""))
+  (layout "Home"))
 
-(defn api-inbox [req]
+(defn api-search [req]
   (let [params (:params req)
         email (:email params)
-        token (:access_token params)]
+        token (:access_token params)
+        query (:query params)]
     (try
-      (json-response (gmail/inbox email token))
+      (json-response (gmail/search email token query))
       (catch AuthenticationFailedException e
-        (access-denied-response (.getMessage e))))))
+        (json-response 403 (.getMessage e))))))
 
-(defn stats-page [req]
+(defn api-stats [req]
   (json-response (stats/server)))
+
+(defn api-message [id req]
+  (json-response "Unimplemented"))
 
 (defroutes app-routes
   (GET "/" [] index-page)
   (context "/api" []
-    (GET "/" [] stats-page)
-    (GET "/inbox" [] api-inbox))
+    (GET "/" [] api-stats)
+    (GET "/messages" [] api-search)
+    (GET "/messages/:id" [id] (partial api-message id)))
   (route/resources "/assets")
   (route/not-found "404..."))
 
