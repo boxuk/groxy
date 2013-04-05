@@ -8,14 +8,13 @@
                        [route :as route])
             [groxy.gmail :as gmail]
             [groxy.stats :as stats]
-            [cheshire.core :as json])
-  (:import (javax.mail AuthenticationFailedException)))
+            [cheshire.core :as json]))
 
-(defmacro with-gmail [& body]
+(defmacro as-json [& body]
   `(try
      (let [body# (doall ~@body)]
        (json-response body#))
-     (catch AuthenticationFailedException e#
+     (catch Exception e#
          (json-response 403 (.getMessage e#)))))
 
 (defn json-response
@@ -50,12 +49,12 @@
 
 (defn api-search [req]
   (let [[email token query] (params-for req)]
-    (with-gmail
+    (as-json
       (gmail/search email token query))))
 
 (defn api-message [id req]
   (let [[email token] (params-for req)]
-    (with-gmail
+    (as-json
       (gmail/message email token (Integer/parseInt id)))))
 
 ;; Routes
