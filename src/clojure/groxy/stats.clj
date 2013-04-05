@@ -5,13 +5,13 @@
 
 (defn store2map [k v]
   {:email k
-   :connected (.isConnected v)})
+   :connected (.isConnected (:store v))})
 
 (defn store-summary []
   (let [stores @data/stores]
     (map store2map
          (keys stores)
-         (map :store (vals stores)))))
+         (vals stores))))
 
 ;; Public
 ;; ------

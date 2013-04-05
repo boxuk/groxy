@@ -116,27 +116,46 @@
     (.open folder (Folder/READ_ONLY))
     folder))
 
-;; Public
-;; ------
-
-(defn message [email token id]
-  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
-    (message2map (id2message all-mail id)
-                 :with-attachment-data true)))
-
-(defn search [email token query]
+(defn- search-for [email token query]
   (let [all-mail (folder-for email token FOLDER_ALLMAIL)
         search (GmailSearchCommand. FOLDER_ALLMAIL query)
         response (.doCommand all-mail search)
         ids (take MAX_SEARCH_RESULTS (.getMessageIds response))
         msgs (map (partial id2message all-mail) ids)]
-    (map message2map msgs)))
+    (doall
+      (map message2map msgs))))
 
-(defn inbox [email token]
-  (let [inbox (folder-for email token FOLDER_INBOX)
-        msgs (.getMessages inbox)
-        profile (doto (FetchProfile.)
-                  (.add (FetchProfile$Item/ENVELOPE)))]
-    (.fetch inbox msgs profile)
-    (map message2map msgs)))
+(defn- message-for [email token id]
+  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
+    (message2map (id2message all-mail id)
+                 :with-attachment-data true)))
+
+;; Concurrency Handling
+;; --------------------
+
+(defmacro wait-for [ref-store id & body]
+  `(if-let [waiting# (get-in (deref ~ref-store) ~id)]
+     @waiting#
+     (let [worker# (future ~@body)]
+       (dosync
+         (alter ~ref-store assoc-in ~id worker#))
+       (let [result# (deref worker#)]
+         (dosync
+           (alter ~ref-store assoc-in ~id nil))
+         result#))))
+
+;; Public
+;; ------
+
+(defn message [email token id]
+  (wait-for
+    data/stores
+    [email :messages id]
+    (message-for email token id)))
+
+(defn search [email token query]
+  (wait-for
+    data/stores
+    [email :search query]
+    (search-for email token query)))
 
