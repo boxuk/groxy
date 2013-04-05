@@ -25,7 +25,7 @@ public class GmailSearchResponse {
     {
         final Integer messageId = new Integer(id);
         
-        messageIds.add(messageId);
+        messageIds.add(0, messageId);
     }
 
     /**
