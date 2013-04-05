@@ -5,7 +5,8 @@
 
 (defn store2map [k v]
   {:email k
-   :connected (.isConnected (:store v))})
+   :connected (if-let [store (:store v)]
+                (.isConnected (:store v)))})
 
 (defn store-summary []
   (let [stores @data/stores]
