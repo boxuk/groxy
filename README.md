@@ -3,7 +3,7 @@
 
 A JSON API proxy for talking to Gmail.  Allows using persistent IMAP connections for non-resident scripting languages.
 
-There is (http://boxuk.github.com/groxy/)[literate documentation] available.
+There is [literate documentation](http://boxuk.github.com/groxy/) available.
 
 ## Usage
 
