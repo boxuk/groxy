@@ -17,12 +17,18 @@ public class GmailSearchCommand implements IMAPFolder.ProtocolCommand
      * @var String
      */
     private String queryString;
+
+    /**
+     * @var String
+     */
+    private String folderName;
     
     /**
      * @param query 
      */
-    public GmailSearchCommand(final String queryString)
+    public GmailSearchCommand(final String folderName, final String queryString)
     {
+        this.folderName = folderName;
         this.queryString = queryString;
     }
     
@@ -35,7 +41,7 @@ public class GmailSearchCommand implements IMAPFolder.ProtocolCommand
     public Object doCommand(final IMAPProtocol protocol)
     {
         final Argument inbox = new Argument();
-        inbox.writeString("[Gmail]/All Mail");
+        inbox.writeString(folderName);
         
         final Argument query = new Argument();
         query.writeString(queryString);

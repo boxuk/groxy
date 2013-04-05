@@ -105,7 +105,7 @@
 
 (defn search [email token query]
   (let [all-mail (folder-for email token FOLDER_ALLMAIL)
-        search (GmailSearchCommand. query)
+        search (GmailSearchCommand. FOLDER_ALLMAIL query)
         response (.doCommand all-mail search)
         ids (take MAX_SEARCH_RESULTS (.getMessageIds response))
         msgs (map (partial id2message all-mail) ids)]
