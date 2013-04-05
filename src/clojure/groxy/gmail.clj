@@ -139,10 +139,11 @@
      (let [worker# (future ~@body)]
        (dosync
          (alter ~ref-store assoc-in ~id worker#))
-       (let [result# (deref worker#)]
-         (dosync
-           (alter ~ref-store assoc-in ~id nil))
-         result#))))
+       (try
+         (deref worker#)
+         (finally
+           (dosync
+             (alter ~ref-store assoc-in ~id nil)))))))
 
 ;; Public
 ;; ------
