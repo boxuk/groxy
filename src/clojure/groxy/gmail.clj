@@ -140,7 +140,7 @@
        (dosync
          (alter ~ref-store assoc-in ~id worker#))
        (try
-         (deref worker#)
+         @worker#
          (finally
            (dosync
              (alter ~ref-store assoc-in ~id nil)))))))
