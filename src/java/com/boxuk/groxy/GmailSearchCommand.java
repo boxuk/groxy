@@ -5,6 +5,7 @@ import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.protocol.IMAPProtocol;
 
 import com.sun.mail.iap.Argument;
+import com.sun.mail.iap.ProtocolException;
 import com.sun.mail.iap.Response;
 
 /**
@@ -38,23 +39,36 @@ public class GmailSearchCommand implements IMAPFolder.ProtocolCommand
      * @return 
      */
     @Override
-    public Object doCommand(final IMAPProtocol protocol)
+    public Object doCommand(final IMAPProtocol protocol) throws ProtocolException
     {
-        final Argument inbox = new Argument();
-        inbox.writeString(folderName);
+        protocol.select(folderName);
         
-        final Argument query = new Argument();
-        query.writeString(queryString);
-        
-        protocol.command("SELECT", inbox);
-        
-        final Response[] responses = protocol.command("SEARCH X-GM-RAW", query);
+        final Response[] responses = protocol.command(
+            "SEARCH X-GM-RAW",
+            argument(queryString)
+        );
         
         if (responses.length > 0) {
             return parseSearchResponse(responses[0]);
         }
         
         return new GmailSearchResponse();
+    }
+
+    /**
+     * Create an argument for a command
+     * 
+     * @param value
+     * 
+     * @return 
+     */
+    protected Argument argument(final String value)
+    {
+        final Argument arg = new Argument();
+        
+        arg.writeString(value);
+        
+        return arg;
     }
     
     /**

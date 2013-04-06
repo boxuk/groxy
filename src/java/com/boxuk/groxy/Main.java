@@ -30,6 +30,11 @@ public class Main {
     private static final int GMAIL_IMAP_PORT = 993;
     
     /**
+     * @var String
+     */
+    private static final String GMAIL_ALL_MAIL = "[Gmail]/All Mail";
+    
+    /**
      * @param args
      */
     public static void main(final String args[]) {
@@ -68,7 +73,7 @@ public class Main {
             
             System.out.println("Searching for: " +query);
             
-            final GmailSearchCommand search = new GmailSearchCommand(query);
+            final GmailSearchCommand search = new GmailSearchCommand(GMAIL_ALL_MAIL, query);
             
             final IMAPFolder folder = (IMAPFolder) store.getFolder("Inbox");
             final GmailSearchResponse response = (GmailSearchResponse) folder.doCommand(search);

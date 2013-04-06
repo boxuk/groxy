@@ -5,12 +5,6 @@ A JSON API proxy for talking to Gmail.  Allows using persistent IMAP connections
 
 There is [literate documentation](http://boxuk.github.com/groxy/) available.
 
-### Disclaimer
-
-At the moment it _seems_ this only works with Gmail accounts that are part of a
-Google Apps for Business domain.  But I can't find any documentation to indicate that
-this shouldn't work with normal Gmail accounts.  So YMMV.
-
 ## Usage
 
 Clone the repo and start the application.
@@ -68,6 +62,13 @@ access_token - A valid OAuth access token
 Obtaining and refreshing access tokens is not handled by Groxy, you need to do this yourself.
 If you make a request with an invalid access token you'll receive a 403 response, which is 
 your notification to refresh your token and try again.
+
+To try Groxy out the easiest way is to get an access token from the [OAuth Playground](https://developers.google.com/oauthplayground/).
+But don't select the Gmail service listed, enter the scope explicitly as...
+
+```
+https://mail.google.com/
+```
 
 ## Java Classes
 
