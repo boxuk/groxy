@@ -3029,7 +3029,21 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>groxy -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">groxy</h1><h2 class="project-version">0.0.1</h2><br /><p>Gmail OAuth proxy API</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.0</td></tr><tr><td class="dep-name">compojure</td><td class="dotted"><hr /></td><td class="dep-version">1.1.5</td></tr><tr><td class="dep-name">http-kit</td><td class="dotted"><hr /></td><td class="dep-version">2.0.0-RC4</td></tr><tr><td class="dep-name">ring/ring-devel</td><td class="dotted"><hr /></td><td class="dep-version">1.1.8</td></tr><tr><td class="dep-name">enlive</td><td class="dotted"><hr /></td><td class="dep-version">1.0.1</td></tr><tr><td class="dep-name">confo</td><td class="dotted"><hr /></td><td class="dep-version">0.1.1</td></tr><tr><td class="dep-name">javax.mail/mail</td><td class="dotted"><hr /></td><td class="dep-version">1.4.7</td></tr><tr><td class="dep-name">cheshire</td><td class="dotted"><hr /></td><td class="dep-version">5.0.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#groxy.core">groxy.core</a></li><li><a href="#groxy.data">groxy.data</a></li><li><a href="#groxy.gmail">groxy.gmail</a></li><li><a href="#groxy.stats">groxy.stats</a></li><li><a href="#groxy.util">groxy.util</a></li><li><a href="#groxy.web">groxy.web</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.core" name="groxy.core"><h1 class="project-name">groxy.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.0</td></tr><tr><td class="dep-name">compojure</td><td class="dotted"><hr /></td><td class="dep-version">1.1.5</td></tr><tr><td class="dep-name">http-kit</td><td class="dotted"><hr /></td><td class="dep-version">2.0.0</td></tr><tr><td class="dep-name">ring/ring-devel</td><td class="dotted"><hr /></td><td class="dep-version">1.1.8</td></tr><tr><td class="dep-name">enlive</td><td class="dotted"><hr /></td><td class="dep-version">1.0.1</td></tr><tr><td class="dep-name">confo</td><td class="dotted"><hr /></td><td class="dep-version">0.1.1</td></tr><tr><td class="dep-name">javax.mail/mail</td><td class="dotted"><hr /></td><td class="dep-version">1.4.7</td></tr><tr><td class="dep-name">cheshire</td><td class="dotted"><hr /></td><td class="dep-version">5.0.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#groxy.cache">groxy.cache</a></li><li><a href="#groxy.core">groxy.core</a></li><li><a href="#groxy.data">groxy.data</a></li><li><a href="#groxy.gmail">groxy.gmail</a></li><li><a href="#groxy.imap">groxy.imap</a></li><li><a href="#groxy.stats">groxy.stats</a></li><li><a href="#groxy.util">groxy.util</a></li><li><a href="#groxy.web">groxy.web</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.cache" name="groxy.cache"><h1 class="project-name">groxy.cache</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns groxy.cache)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def data (ref {}))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn cache-write [id to-cache]
+  (dosync
+    (alter data assoc-in id to-cache)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn cache-read [id]
+  (get-in @data id))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmacro with-cache [id &amp; body]
+  `(if-let [cached# (cache-read ~id)]
+     (with-meta cached# {:cached true})
+     (let [to-cache# (doall ~@body)]
+       (cache-write ~id to-cache#)
+       (with-meta to-cache# {:cached false}))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.core" name="groxy.core"><h1 class="project-name">groxy.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns groxy.core
   (:use confo.core
         [org.httpkit.server :only [run-server]])
@@ -3045,45 +3059,28 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns groxy.gmail
   (:require [groxy.data :as data]
             [groxy.util :as util]
+            [groxy.cache :as cache]
+            [groxy.imap :as imap]
             [clojure.string :as string])
-  (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
-           (java.util Properties)
-           (javax.mail Session Folder FetchProfile FetchProfile$Item)
-           (com.sun.mail.imap IMAPSSLStore)
+  (:import (javax.mail FetchProfile FetchProfile$Item)
+           (javax.mail Folder)
+           (com.sun.mail.imap IMAPMessage IMAPFolder)
            (com.boxuk.groxy GmailSearchCommand)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(OAuth2Authenticator/initialize)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def GMAIL_IMAP_HOST &quot;imap.gmail.com&quot;)
-(def GMAIL_IMAP_PORT 993)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def MAX_SEARCH_RESULTS 20)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def FOLDER_INBOX &quot;Inbox&quot;)
-(def FOLDER_ALLMAIL &quot;[Gmail]/All Mail&quot;)</pre></td></tr><tr><td class="docs"><h2>IMAP</h2>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- imap-properties [token]
-  (let [props (Properties.)]
-     (doto props
-      (.put &quot;mail.imaps.sasl.enable&quot; &quot;true&quot;)
-      (.put &quot;mail.imaps.sasl.mechanisms&quot;, &quot;XOAUTH2&quot;)
-      (.put OAuth2SaslClientFactory/OAUTH_TOKEN_PROP token))
-    props))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- imap-store [email token]
-  (let [props (imap-properties token)
-        session (Session/getInstance props)
-        store (IMAPSSLStore. session nil)]
-    (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email )
-    store))</pre></td></tr><tr><td class="docs"><h2>Message Parsing</h2>
+</td><td class="codes"><pre class="brush: clojure">(def MAX_SEARCH_RESULTS 20)</pre></td></tr><tr><td class="docs"><p>(def FOLDER_GOOGLEMAIL "[Google Mail]/All Mail")</p>
+</td><td class="codes"><pre class="brush: clojure">(def FOLDER_GMAIL &quot;[Gmail]/All Mail&quot;)</pre></td></tr><tr><td class="docs"><h2>Message Parsing</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- content-type [part]
   (let [ct (.getContentType part)]
     (.toLowerCase (.substring ct 0 (.indexOf ct &quot;;&quot;)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- is-plain-text [msg]
+</td><td class="codes"><pre class="brush: clojure">(defn- is-plain-text [^IMAPMessage msg]
   (let [ct (content-type msg)]
     (or (= &quot;text/plain&quot; ct)
         (= &quot;text/html&quot; ct))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- mime-parts [msg]
+</td><td class="codes"><pre class="brush: clojure">(defn- mime-parts [^IMAPMessage msg]
   (let [multipart (.getContent msg)]
     (for [i (range 0 (.getCount multipart))]
       (.getBodyPart multipart i))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- message-body [msg]
+</td><td class="codes"><pre class="brush: clojure">(defn- message-body [^IMAPMessage msg]
   (if (is-plain-text msg)
       (.getContent msg)
       (if-let [part (-&gt;&gt; (mime-parts msg)
@@ -3099,25 +3096,24 @@ net.brehaut.ClojureTools = (function (SH) {
    :content-type (content-type attachment)
    :data (if with-data
            (util/base64 attachment))})</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- message-attachments [msg &amp; [with-data]]
+</td><td class="codes"><pre class="brush: clojure">(defn- attachments [^IMAPMessage msg &amp; [options]]
   (if (is-plain-text msg)
     []
     (-&gt;&gt; (mime-parts msg)
          (filter (complement is-plain-text))
-         (map (partial attachment2map with-data)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- message2map [msg &amp; options]
-  {:subject (.getSubject msg)
+         (map (partial attachment2map (:with-data options))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- message2map [^IMAPMessage msg]
+  {:id (.getMessageNumber msg)
    :from (email2map (first (.getFrom msg)))
-   :id (.getMessageNumber msg)
+   :subject (.getSubject msg)
    :body (message-body msg)
-   :attachments (message-attachments msg
-                                     (get (apply hash-map options)
-                                          :with-attachment-data false))})</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- id2message [folder message-id]
-  (.getMessage folder message-id))</pre></td></tr><tr><td class="docs"><h2>Store/Folder Handling</h2>
+   :attachments (attachments msg)})</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- id2map [email ^IMAPFolder folder id]
+  (cache/with-cache [(str email &quot;-msg-&quot; id)]
+                    (message2map (imap/message folder id))))</pre></td></tr><tr><td class="docs"><h2>Store/Folder Handling</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- new-store-for [email token]
-  (let [new-store (imap-store email token)]
+  (let [new-store (imap/store email token)]
     (dosync
       (alter data/stores assoc-in [email :store] new-store))
     new-store))</pre></td></tr><tr><td class="docs">
@@ -3134,45 +3130,59 @@ net.brehaut.ClojureTools = (function (SH) {
     (.open folder (Folder/READ_ONLY))
     folder))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- search-for [email token query]
-  (let [all-mail (folder-for email token FOLDER_ALLMAIL)
-        search (GmailSearchCommand. FOLDER_ALLMAIL query)
+  (let [all-mail (folder-for email token FOLDER_GMAIL)
+        search (GmailSearchCommand. FOLDER_GMAIL query)
         response (.doCommand all-mail search)
-        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))
-        msgs (map (partial id2message all-mail) ids)]
+        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
     (doall
-      (map message2map msgs))))</pre></td></tr><tr><td class="docs">
+      (map (partial id2map email all-mail) ids))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- message-for [email token id]
-  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
-    (message2map (id2message all-mail id)
-                 :with-attachment-data true)))</pre></td></tr><tr><td class="docs"><h2>Concurrency Handling</h2>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro wait-for [ref-store id &amp; body]
-  `(if-let [waiting# (get-in (deref ~ref-store) ~id)]
-     @waiting#
-     (let [worker# (future ~@body)]
-       (dosync
-         (alter ~ref-store assoc-in ~id worker#))
-       (let [result# (deref worker#)]
-         (dosync
-           (alter ~ref-store assoc-in ~id nil))
-         result#))))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
+  (let [all-mail (folder-for email token FOLDER_GMAIL)
+        data (id2map email all-mail id)
+        attchs (attachments (imap/message all-mail id)
+                            {:with-data true})]
+    (merge data {:attachments attchs})))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn message [email token id]
-  (wait-for
+  (util/worker
     data/stores
     [email :messages id]
     (message-for email token id)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn search [email token query]
-  (wait-for
+  (util/worker
     data/stores
     [email :search query]
-    (search-for email token query)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.stats" name="groxy.stats"><h1 class="project-name">groxy.stats</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+    (search-for email token query)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.imap" name="groxy.imap"><h1 class="project-name">groxy.imap</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns groxy.imap
+  (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
+           (java.util Properties)
+           (javax.mail Session FetchProfile FetchProfile$Item)
+           (com.sun.mail.imap IMAPSSLStore IMAPFolder)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(OAuth2Authenticator/initialize)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def GMAIL_IMAP_HOST &quot;imap.gmail.com&quot;)
+(def GMAIL_IMAP_PORT 993)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- properties [token]
+  (let [props (Properties.)]
+     (doto props
+      (.put &quot;mail.imaps.sasl.enable&quot; &quot;true&quot;)
+      (.put &quot;mail.imaps.sasl.mechanisms&quot;, &quot;XOAUTH2&quot;)
+      (.put OAuth2SaslClientFactory/OAUTH_TOKEN_PROP token))
+    props))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn store [email token]
+  (let [session (Session/getInstance (properties token))
+        store (IMAPSSLStore. session nil)]
+    (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email )
+    store))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn message [^IMAPFolder folder id]
+  (.getMessage folder id))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.stats" name="groxy.stats"><h1 class="project-name">groxy.stats</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns groxy.stats
   (:require [groxy.data :as data])
   (:import (java.lang.management ManagementFactory RuntimeMXBean)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn store2map [k v]
   {:email k
-   :connected (.isConnected (:store v))})</pre></td></tr><tr><td class="docs">
+   :connected (if-let [store (:store v)]
+                (.isConnected (:store v)))})</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn store-summary []
   (let [stores @data/stores]
     (map store2map
@@ -3188,17 +3198,34 @@ net.brehaut.ClojureTools = (function (SH) {
               :used (- (.totalMemory rt) (.freeMemory rt))}
      :stores (store-summary)}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.util" name="groxy.util"><h1 class="project-name">groxy.util</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns groxy.util
-  (:require [ring.util.codec :as codec]))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Access to private or protected field. (from clojure.contrib.java-utils)</p>
-</td><td class="codes"><pre class="brush: clojure">(defn property
-  [class-name field-name obj]
-  (-&gt; class-name (.getDeclaredField (name field-name))
+  (:import (com.sun.mail.imap IMAPBodyPart)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn worker-get [store id]
+  (get-in @store id))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn worker-set [store id f]
+  (dosync
+    (alter store assoc-in id f)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn worker-clear [store id]
+  (worker-set store id nil))</pre></td></tr><tr><td class="docs"><p>Calls a private or protected method. (from clojure.contrib.java-utils)</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- method
+  [class-name method-name params obj &amp; args]
+  (-&gt; class-name (.getDeclaredMethod (name method-name) (into-array Class params))
     (doto (.setAccessible true))
-    (.get obj)))</pre></td></tr><tr><td class="docs"><p>Return some Base64 encoded attachment content</p>
+    (.invoke obj (into-array Object args))))</pre></td></tr><tr><td class="docs"><h2>Public</h2>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Return some Base64 encoded attachment content</p>
 </td><td class="codes"><pre class="brush: clojure">(defn base64
   [attachment]
-  (let [binary (slurp (.getContent attachment))]
-    (codec/base64-encode (.getBytes binary))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.web" name="groxy.web"><h1 class="project-name">groxy.web</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (let [stream (method IMAPBodyPart &quot;getContentStream&quot; [] attachment)]
+    (slurp stream)))</pre></td></tr><tr><td class="docs"><p>Use futures to handle waiting on tasks already being processed</p>
+</td><td class="codes"><pre class="brush: clojure">(defmacro worker
+  [store id &amp; body]
+  `(if-let [waiting# (worker-get ~store ~id)]
+     (with-meta @waiting# {:via-worker false})
+     (let [f# (future ~@body)]
+       (worker-set ~store ~id f#)
+       (try
+         (with-meta @f# {:via-worker true})
+         (finally
+           (worker-clear ~store ~id))))    ))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#groxy.web" name="groxy.web"><h1 class="project-name">groxy.web</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns groxy.web
   (:use compojure.core
         ring.middleware.reload
@@ -3208,13 +3235,13 @@ net.brehaut.ClojureTools = (function (SH) {
                        [route :as route])
             [groxy.gmail :as gmail]
             [groxy.stats :as stats]
-            [cheshire.core :as json])
-  (:import (javax.mail AuthenticationFailedException)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro with-gmail [&amp; body]
+            [cheshire.core :as json]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmacro as-json [&amp; body]
   `(try
      (let [body# (doall ~@body)]
        (json-response body#))
-     (catch AuthenticationFailedException e#
+     (catch Exception e#
+         (.printStackTrace e#)
          (json-response 403 (.getMessage e#)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn json-response
   ([content] (json-response 200 content))
@@ -3239,11 +3266,11 @@ net.brehaut.ClojureTools = (function (SH) {
   (json-response (stats/server)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn api-search [req]
   (let [[email token query] (params-for req)]
-    (with-gmail
+    (as-json
       (gmail/search email token query))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn api-message [id req]
   (let [[email token] (params-for req)]
-    (with-gmail
+    (as-json
       (gmail/message email token (Integer/parseInt id)))))</pre></td></tr><tr><td class="docs"><h2>Routes</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defroutes app-routes
