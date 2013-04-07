@@ -1,6 +1,6 @@
 
 (ns groxy.util
-  (:require [ring.util.codec :as codec]))
+  (:import (com.sun.mail.imap IMAPBodyPart)))
 
 (defn worker-get [store id]
   (get-in @store id))
@@ -12,21 +12,21 @@
 (defn worker-clear [store id]
   (worker-set store id nil))
 
+(defn- method
+  "Calls a private or protected method. (from clojure.contrib.java-utils)"
+  [class-name method-name params obj & args]
+  (-> class-name (.getDeclaredMethod (name method-name) (into-array Class params))
+    (doto (.setAccessible true))
+    (.invoke obj (into-array Object args))))
+
 ;; Public
 ;; ------
-
-(defn property
-  "Access to private or protected field. (from clojure.contrib.java-utils)"
-  [class-name field-name obj]
-  (-> class-name (.getDeclaredField (name field-name))
-    (doto (.setAccessible true))
-    (.get obj)))
 
 (defn base64
   "Return some Base64 encoded attachment content"
   [attachment]
-  (let [binary (slurp (.getContent attachment))]
-    (codec/base64-encode (.getBytes binary))))
+  (let [stream (method IMAPBodyPart "getContentStream" [] attachment)]
+    (slurp stream)))
 
 (defmacro worker
   "Use futures to handle waiting on tasks already being processed"
