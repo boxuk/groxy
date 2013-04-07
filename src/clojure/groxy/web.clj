@@ -15,6 +15,7 @@
      (let [body# (doall ~@body)]
        (json-response body#))
      (catch Exception e#
+         (.printStackTrace e#)
          (json-response 403 (.getMessage e#)))))
 
 (defn json-response

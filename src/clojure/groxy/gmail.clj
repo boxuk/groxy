@@ -2,40 +2,18 @@
 (ns groxy.gmail
   (:require [groxy.data :as data]
             [groxy.util :as util]
+            [groxy.cache :as cache]
+            [groxy.imap :as imap]
             [clojure.string :as string])
-  (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
-           (java.util Properties)
-           (javax.mail Session Folder FetchProfile FetchProfile$Item)
-           (com.sun.mail.imap IMAPSSLStore)
+  (:import (javax.mail FetchProfile FetchProfile$Item)
+           (javax.mail Folder)
+           (com.sun.mail.imap IMAPMessage IMAPFolder)
            (com.boxuk.groxy GmailSearchCommand)))
-
-(OAuth2Authenticator/initialize)
-
-(def GMAIL_IMAP_HOST "imap.gmail.com")
-(def GMAIL_IMAP_PORT 993)
 
 (def MAX_SEARCH_RESULTS 20)
 
-(def FOLDER_INBOX "Inbox")
-(def FOLDER_ALLMAIL "[Gmail]/All Mail")
-
-;; IMAP
-;; ----
-
-(defn- imap-properties [token]
-  (let [props (Properties.)]
-     (doto props
-      (.put "mail.imaps.sasl.enable" "true")
-      (.put "mail.imaps.sasl.mechanisms", "XOAUTH2")
-      (.put OAuth2SaslClientFactory/OAUTH_TOKEN_PROP token))
-    props))
-
-(defn- imap-store [email token]
-  (let [props (imap-properties token)
-        session (Session/getInstance props)
-        store (IMAPSSLStore. session nil)]
-    (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email "")
-    store))
+;(def FOLDER_GOOGLEMAIL "[Google Mail]/All Mail")
+(def FOLDER_GMAIL "[Gmail]/All Mail")
 
 ;; Message Parsing
 ;; ---------------
@@ -44,17 +22,17 @@
   (let [ct (.getContentType part)]
     (.toLowerCase (.substring ct 0 (.indexOf ct ";")))))
 
-(defn- is-plain-text [msg]
+(defn- is-plain-text [^IMAPMessage msg]
   (let [ct (content-type msg)]
     (or (= "text/plain" ct)
         (= "text/html" ct))))
 
-(defn- mime-parts [msg]
+(defn- mime-parts [^IMAPMessage msg]
   (let [multipart (.getContent msg)]
     (for [i (range 0 (.getCount multipart))]
       (.getBodyPart multipart i))))
 
-(defn- message-body [msg]
+(defn- message-body [^IMAPMessage msg]
   (if (is-plain-text msg)
       (.getContent msg)
       (if-let [part (->> (mime-parts msg)
@@ -74,30 +52,29 @@
    :data (if with-data
            (util/base64 attachment))})
 
-(defn- message-attachments [msg & [with-data]]
+(defn- attachments [^IMAPMessage msg & [options]]
   (if (is-plain-text msg)
     []
     (->> (mime-parts msg)
          (filter (complement is-plain-text))
-         (map (partial attachment2map with-data)))))
+         (map (partial attachment2map (:with-data options))))))
 
-(defn- message2map [msg & options]
-  {:subject (.getSubject msg)
+(defn- message2map [^IMAPMessage msg]
+  {:id (.getMessageNumber msg)
    :from (email2map (first (.getFrom msg)))
-   :id (.getMessageNumber msg)
+   :subject (.getSubject msg)
    :body (message-body msg)
-   :attachments (message-attachments msg
-                                     (get (apply hash-map options)
-                                          :with-attachment-data false))})
+   :attachments (attachments msg)})
 
-(defn- id2message [folder message-id]
-  (.getMessage folder message-id))
+(defn- id2map [email ^IMAPFolder folder id]
+  (cache/with-cache [(str email "-msg-" id)]
+                    (message2map (imap/message folder id))))
 
 ;; Store/Folder Handling
 ;; ---------------------
 
 (defn- new-store-for [email token]
-  (let [new-store (imap-store email token)]
+  (let [new-store (imap/store email token)]
     (dosync
       (alter data/stores assoc-in [email :store] new-store))
     new-store))
@@ -117,45 +94,31 @@
     folder))
 
 (defn- search-for [email token query]
-  (let [all-mail (folder-for email token FOLDER_ALLMAIL)
-        search (GmailSearchCommand. FOLDER_ALLMAIL query)
+  (let [all-mail (folder-for email token FOLDER_GMAIL)
+        search (GmailSearchCommand. FOLDER_GMAIL query)
         response (.doCommand all-mail search)
-        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))
-        msgs (map (partial id2message all-mail) ids)]
+        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
     (doall
-      (map message2map msgs))))
+      (map (partial id2map email all-mail) ids))))
 
 (defn- message-for [email token id]
-  (let [all-mail (folder-for email token FOLDER_ALLMAIL)]
-    (message2map (id2message all-mail id)
-                 :with-attachment-data true)))
-
-;; Concurrency Handling
-;; --------------------
-
-(defmacro wait-for [ref-store id & body]
-  `(if-let [waiting# (get-in (deref ~ref-store) ~id)]
-     @waiting#
-     (let [worker# (future ~@body)]
-       (dosync
-         (alter ~ref-store assoc-in ~id worker#))
-       (try
-         @worker#
-         (finally
-           (dosync
-             (alter ~ref-store assoc-in ~id nil)))))))
+  (let [all-mail (folder-for email token FOLDER_GMAIL)
+        data (id2map email all-mail id)
+        attchs (attachments (imap/message all-mail id)
+                            {:with-data true})]
+    (merge data {:attachments attchs})))
 
 ;; Public
 ;; ------
 
 (defn message [email token id]
-  (wait-for
+  (util/worker
     data/stores
     [email :messages id]
     (message-for email token id)))
 
 (defn search [email token query]
-  (wait-for
+  (util/worker
     data/stores
     [email :search query]
     (search-for email token query)))
