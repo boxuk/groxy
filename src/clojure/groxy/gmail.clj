@@ -83,8 +83,8 @@
   (if-let [store (get-in @data/stores [email :store])]
     (if (.isConnected store)
         store
-        (doall (.close store)
-               (new-store-for email token)))
+        (do (.close store)
+            (new-store-for email token)))
     (new-store-for email token)))
 
 (defn- folder-for [email token folder-name]
