@@ -9,8 +9,10 @@
                  [confo "0.1.1"]
                  [javax.mail/mail "1.4.7"]
                  [cheshire "5.0.2"]]
-  :plugins [[lein-marginalia "0.7.1"]]
+  :plugins [[lein-marginalia "0.7.1"]
+            [lein-ring "0.8.3"]]
   :source-paths ["src/clojure" "resources/views"]
   :java-source-paths ["src/java"]
+  :ring {:handler groxy.web/app}
   :main groxy.core)
 

@@ -91,3 +91,13 @@ lein marg
 
 And is then available in the _docs_ folder.
 
+## Deployment
+
+You can build a WAR file for deployment using:
+
+```
+lein ring war
+```
+
+This will build a version numbered file in _target/groxy-X.X.X.war_.
+
