@@ -93,7 +93,10 @@
     (.open folder (Folder/READ_ONLY))
     folder))
 
-(defn- search-for [email token query]
+;; Public
+;; ------
+
+(defn search [email token query]
   (let [all-mail (folder-for email token FOLDER_GMAIL)
         search (GmailSearchCommand. FOLDER_GMAIL query)
         response (.doCommand all-mail search)
@@ -101,25 +104,10 @@
     (doall
       (map (partial id2map email all-mail) ids))))
 
-(defn- message-for [email token id]
+(defn message [email token id]
   (let [all-mail (folder-for email token FOLDER_GMAIL)
         data (id2map email all-mail id)
         attchs (attachments (imap/message all-mail id)
                             {:with-data true})]
     (merge data {:attachments attchs})))
-
-;; Public
-;; ------
-
-(defn message [email token id]
-  (util/worker
-    data/stores
-    [email :messages id]
-    (message-for email token id)))
-
-(defn search [email token query]
-  (util/worker
-    data/stores
-    [email :search query]
-    (search-for email token query)))
 

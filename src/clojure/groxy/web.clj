@@ -3,7 +3,8 @@
   (:use compojure.core
         ring.middleware.reload
         ring.middleware.stacktrace
-        net.cgrand.enlive-html)
+        net.cgrand.enlive-html
+        [wrap-worker.core :only [wrap-worker]])
   (:require (compojure [handler :as handler]
                        [route :as route])
             [groxy.gmail :as gmail]
@@ -74,5 +75,6 @@
   (-> #'app-routes
     (wrap-reload)
     (wrap-stacktrace)
+    (wrap-worker)
     (handler/site)))
 
