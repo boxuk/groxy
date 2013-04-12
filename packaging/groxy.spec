@@ -1,6 +1,6 @@
 Summary:   Gmail API Proxy
 Name:      groxy
-Version:   0.1.0
+Version:   0.1.1
 Release:   1%{?dist}
 Requires:  tomcat6 tomcat6-webapps
 BuildArch: noarch
