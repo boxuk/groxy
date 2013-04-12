@@ -1,33 +1,38 @@
-Summary:   Gmail API Proxy
-Name:      groxy
-Version:   0.1.3
-Release:   1%{?dist}
-Requires:  tomcat6, tomcat6-webapps
-BuildArch: noarch
-Group:     Internet / Applications
-Vendor:    Box UK
-License:   GPL, MIT
+Summary:       Gmail API Proxy
+Name:          groxy
+Version:       %{_ver}
+Release:       2%{?dist}
+BuildArch:     noarch
+Group:         Internet / Applications
+Vendor:        Box UK
+License:       GPL, MIT
+Source:        %{name}-%{version}.tar.gz
+AutoReqProv:   no
 
-# todo - remove hard-coded path
-%define _gitrepository ~/groxy
+BuildRequires: java-1.6.0-openjdk-devel
 
+Requires:      tomcat6, tomcat6-webapps
+
+%define _gitrepository .
 %define _webapps /var/lib/tomcat6/webapps
 
 %description
 A JSON web API that proxies OAuth IMAP access to Gmail.
 
 %prep
+%setup
+
+%build
+curl -o lein https://raw.github.com/technomancy/leiningen/stable/bin/lein
+chmod 755 lein
+./lein clean
+./lein ring uberwar %{name}.war
+
+%install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_webapps}
 
-pushd `pwd`
-cd %{_gitrepository}
-lein clean
-lein ring uberwar %{name}.war
-popd
-
-%install
-cp %{_gitrepository}/target/%{name}.war $RPM_BUILD_ROOT%{_webapps}/
+cp target/%{name}.war $RPM_BUILD_ROOT%{_webapps}/
 
 %files
 %defattr(-,root,tomcat,-)
