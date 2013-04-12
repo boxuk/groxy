@@ -1,13 +1,13 @@
-Summary:	Gmail API Proxy
-Name:		groxy
-Version:	0.1.0
-Release:	1%{?dist}
-Requires:   tomcat6 tomcat6-webapps
-BuildArch:  noarch
-Group:		Internet / Applications
-Prefix:     /usr/local/bin
-Vendor:     boxuk
-License:	BSD
+Summary:   Gmail API Proxy
+Name:      groxy
+Version:   0.1.0
+Release:   1%{?dist}
+Requires:  tomcat6 tomcat6-webapps
+BuildArch: noarch
+Group:     Internet / Applications
+Prefix:    /usr/local/bin
+Vendor:    boxuk
+License:   BSD
 
 %define _gitrepository ~/groxy
 %define _webapps /var/lib/tomcat6/webapps
