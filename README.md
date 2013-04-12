@@ -101,3 +101,10 @@ lein ring war
 
 This will build a version numbered file in _target/groxy-X.X.X.war_.
 
+## Building the RPM
+
+To build the RPM make sure Leiningen is available, then:
+
+```
+rpmbuild -ba packaging/groxy.spec
+```
