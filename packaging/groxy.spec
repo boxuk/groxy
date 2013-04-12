@@ -23,19 +23,19 @@ mkdir -p $RPM_BUILD_ROOT%{_webapps}
 pushd `pwd`
 cd %{_gitrepository}
 lein clean
-lein ring uberwar
+lein ring uberwar %{name}.war
 popd
 
 %install
-cp %{_gitrepository}/target/groxy-%{version}-standalone.war $RPM_BUILD_ROOT%{_webapps}/%{name}.war
+cp %{_gitrepository}/target/%{name}.war $RPM_BUILD_ROOT%{_webapps}/
 
 %files
 %defattr(-,root,tomcat,-)
-/var/lib/tomcat6/webapps/groxy.war
+/var/lib/tomcat6/webapps/%{name}.war
 
 %pre
 service tomcat6 stop
-rm -rf %{_webapps}/groxy*
+rm -rf %{_webapps}/%{name}/
 
 %post
 service tomcat6 start
