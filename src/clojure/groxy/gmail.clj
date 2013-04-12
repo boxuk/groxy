@@ -20,7 +20,9 @@
 
 (defn- content-type [part]
   (let [ct (.getContentType part)]
-    (.toLowerCase (.substring ct 0 (.indexOf ct ";")))))
+    (if (.contains ct ";")
+      (.toLowerCase (.substring ct 0 (.indexOf ct ";")))
+      "text/plain")))
 
 (defn- is-plain-text [^IMAPMessage msg]
   (let [ct (content-type msg)]
