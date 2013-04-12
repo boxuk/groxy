@@ -2,14 +2,15 @@ Summary:   Gmail API Proxy
 Name:      groxy
 Version:   0.1.2
 Release:   1%{?dist}
-Requires:  tomcat6 tomcat6-webapps
+Requires:  tomcat6, tomcat6-webapps
 BuildArch: noarch
 Group:     Internet / Applications
-Prefix:    /usr/local/bin
-Vendor:    boxuk
-License:   MIT
+Vendor:    Box UK
+License:   GPL, MIT
 
+# todo - remove hard-coded path
 %define _gitrepository ~/groxy
+
 %define _webapps /var/lib/tomcat6/webapps
 
 %description
@@ -29,7 +30,7 @@ popd
 cp %{_gitrepository}/target/groxy-%{version}-standalone.war $RPM_BUILD_ROOT%{_webapps}/%{name}.war
 
 %files
-%defattr(-,root,root,-)
+%defattr(-,root,tomcat,-)
 /var/lib/tomcat6/webapps/groxy.war
 
 %pre
