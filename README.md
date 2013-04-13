@@ -93,10 +93,10 @@ And is then available in the _docs_ folder.
 
 ## Deployment
 
-You can build a WAR file for deployment using:
+You can build a standalone WAR file for deployment using:
 
 ```
-lein ring war
+lein ring uberwar
 ```
 
 This will build a version numbered file in _target/groxy-X.X.X.war_.
