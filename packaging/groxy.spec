@@ -25,7 +25,8 @@ A JSON web API that proxies OAuth IMAP access to Gmail.
 
 %build
 curl -o %{_lein} https://raw.github.com/technomancy/leiningen/stable/bin/lein
-sh %{_lein} ring uberwar %{name}.war
+chmod 755 %{_lein}
+%{_lein} ring uberwar %{name}.war
 
 %install
 mkdir -p $RPM_BUILD_ROOT%{_webapps}
