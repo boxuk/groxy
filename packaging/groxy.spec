@@ -15,6 +15,7 @@ Requires:      tomcat6, tomcat6-webapps
 
 %define _gitrepository .
 %define _webapps /var/lib/tomcat6/webapps
+%define _lein /buildroot/bin/lein
 
 %description
 A JSON web API that proxies OAuth IMAP access to Gmail.
@@ -23,13 +24,10 @@ A JSON web API that proxies OAuth IMAP access to Gmail.
 %setup
 
 %build
-curl -o lein https://raw.github.com/technomancy/leiningen/stable/bin/lein
-chmod 755 lein
-./lein clean
-./lein ring uberwar %{name}.war
+curl -o %{_lein} https://raw.github.com/technomancy/leiningen/stable/bin/lein
+sh %{_lein} ring uberwar %{name}.war
 
 %install
-rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_webapps}
 
 cp target/%{name}.war $RPM_BUILD_ROOT%{_webapps}/
