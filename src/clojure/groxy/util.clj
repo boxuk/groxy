@@ -14,7 +14,7 @@
 
 (defn base64
   "Return some Base64 encoded attachment content"
-  [attachment]
-  (let [stream (method IMAPBodyPart "getContentStream" [] attachment)]
-    (slurp stream)))
+  [^IMAPBodyPart attachment]
+  (slurp
+    (method IMAPBodyPart "getContentStream" [] attachment)))
 

@@ -3,28 +3,23 @@
   (:use compojure.core
         ring.middleware.reload
         ring.middleware.stacktrace
-        net.cgrand.enlive-html
-        [wrap-worker.core :only [wrap-worker]])
+        [ring.util.response :only [response status]]
+        [net.cgrand.enlive-html :only [deftemplate content]]
+        [wrap-worker.core :only [wrap-worker]]
+        [ring.middleware.format-response :only [wrap-json-response]])
   (:require (compojure [handler :as handler]
                        [route :as route])
             [groxy.gmail :as gmail]
-            [groxy.stats :as stats]
-            [cheshire.core :as json]))
+            [groxy.stats :as stats]))
 
-(defmacro as-json [& body]
-  `(try
-     (let [body# (doall ~@body)]
-       (json-response body#))
-     (catch Exception e#
+(defmacro defhandler [fn-name params & body]
+  `(defn ~fn-name [~@params]
+     (try
+       (response (do ~@body))
+       (catch Exception e#
          (.printStackTrace e#)
-         (json-response 403 (.getMessage e#)))))
-
-(defn json-response
-  ([content] (json-response 200 content))
-  ([status content]
-    {:status status
-     :content-type "application/json"
-     :body (json/generate-string content)}))
+         (let [error# (response {:message (.getMessage e#)})]
+           (status error# 400))))))
 
 (defn params-for [req]
   (let [params (:params req) ]
@@ -35,41 +30,41 @@
 ;; WWW Pages
 ;; ---------
 
-(deftemplate
-  layout "index.html"
-  [title]
-  [:title] (content title))
-
-(defn page-index [req]
-  (layout "Home"))
+(deftemplate page-index "index.html" [req])
 
 ;; API Handlers
 ;; ------------
 
-(defn api-stats [req]
-  (json-response (stats/server)))
+(defhandler api-stats [req]
+  (stats/server))
 
-(defn api-search [req]
+(defhandler api-search [req]
   (let [[email token query] (params-for req)]
-    (as-json
-      (gmail/search email token query))))
+    (gmail/search email token query)))
 
-(defn api-message [id req]
+(defhandler api-message [id req]
   (let [[email token] (params-for req)]
-    (as-json
-      (gmail/message email token (Integer/parseInt id)))))
+    (gmail/message email token (Integer/parseInt id))))
 
 ;; Routes
 ;; ------
 
-(defroutes app-routes
+(defroutes www-routes
   (GET "/" [] page-index)
+  (route/resources "/assets"))
+
+(defroutes api-routes
   (context "/api" []
     (GET "/" [] api-stats)
     (GET "/messages" [] api-search)
-    (GET "/messages/:id" [id] (partial api-message id)))
-  (route/resources "/assets")
-  (route/not-found "404..."))
+    (GET "/messages/:id" [id] (partial api-message id))))
+
+(defroutes app-routes
+  (routes
+    www-routes
+    (context "/api" [])
+    (wrap-json-response api-routes)
+    (route/not-found "404")))
 
 (def app
   (-> #'app-routes
