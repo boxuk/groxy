@@ -4,7 +4,7 @@
         ring.middleware.reload
         ring.middleware.stacktrace
         [ring.util.response :only [response status]]
-        [net.cgrand.enlive-html :only [deftemplate content]]
+        [net.cgrand.enlive-html :only [deftemplate]]
         [wrap-worker.core :only [wrap-worker]]
         [ring.middleware.format-response :only [wrap-json-response]])
   (:require (compojure [handler :as handler]
