@@ -15,7 +15,7 @@ Requires:      tomcat6, tomcat6-webapps
 
 %define _gitrepository .
 %define _webapps /var/lib/tomcat6/webapps
-%define _lein /builddir/bin/lein
+%define _lein ./lein
 
 %description
 A JSON web API that proxies OAuth IMAP access to Gmail.
