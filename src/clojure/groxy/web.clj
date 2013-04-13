@@ -30,7 +30,7 @@
 ;; WWW Pages
 ;; ---------
 
-(deftemplate page-index "index.html" [req])
+(deftemplate www-index "index.html" [req])
 
 ;; API Handlers
 ;; ------------
@@ -50,7 +50,7 @@
 ;; ------
 
 (defroutes www-routes
-  (GET "/" [] page-index)
+  (GET "/" [] www-index)
   (route/resources "/assets"))
 
 (defroutes api-routes
@@ -62,7 +62,6 @@
 (defroutes app-routes
   (routes
     www-routes
-    (context "/api" [])
     (wrap-json-response api-routes)
     (route/not-found "404")))
 
