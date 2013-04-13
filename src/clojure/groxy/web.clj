@@ -3,6 +3,7 @@
   (:use compojure.core
         ring.middleware.reload
         ring.middleware.stacktrace
+        [clojure.tools.logging :only [info error]]
         [ring.util.response :only [response status]]
         [net.cgrand.enlive-html :only [deftemplate]]
         [wrap-worker.core :only [wrap-worker]]
@@ -17,8 +18,10 @@
      (try
        (response (do ~@body))
        (catch Exception e#
-         (.printStackTrace e#)
-         (let [error# (response {:message (.getMessage e#)})]
+         (let [msg# (.getMessage e#)
+               error# (response {:message msg#})]
+           (error "Error:" msg#)
+           (error (map str (.getStackTrace e#)))
            (status error# 400))))))
 
 (defn params-for [req]
@@ -26,6 +29,13 @@
     [(:email params)
      (:access_token params)
      (:query params)]))
+
+(defn wrap-logging [handler]
+  (fn [req]
+    (info (:request-method req)
+          (:uri req)
+          (:params req))
+    (handler req)))
 
 ;; WWW Pages
 ;; ---------
@@ -69,6 +79,7 @@
   (-> #'app-routes
     (wrap-reload)
     (wrap-stacktrace)
+    (wrap-logging)
     (wrap-worker)
     (handler/site)))
 
