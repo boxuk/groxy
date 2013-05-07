@@ -104,5 +104,13 @@ You can build a standalone WAR file for deployment using:
 lein ring uberwar
 ```
 
-This will build a version numbered file in _target/groxy-X.X.X.war_.
+This will build a version numbered file in _target/groxy-X.X.X.war_. Alternatively you can
+build an executable:
+
+```
+lein bin
+```
+
+The task will output the name of the executable built, but it should be _target/groxy-VERSION_
+
 

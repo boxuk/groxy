@@ -2,7 +2,8 @@
 (ns groxy.core
   (:use confo.core
         [org.httpkit.server :only [run-server]])
-  (:require [groxy.web :as web]))
+  (:require [groxy.web :as web])
+  (:gen-class))
 
 (def config (confo :groxy
                    :port 4545))

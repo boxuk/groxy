@@ -12,7 +12,8 @@
                  [ring-middleware-format "0.3.0"]
                  [org.clojure/tools.logging "0.2.6"]]
   :plugins [[lein-marginalia "0.7.1"]
-            [lein-ring "0.8.3"]]
+            [lein-ring "0.8.3"]
+            [lein-bin "0.3.2"]]
   :source-paths ["src/clojure" "resources/views"]
   :java-source-paths ["src/java"]
   :ring {:handler groxy.web/app}
