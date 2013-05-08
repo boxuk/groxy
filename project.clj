@@ -17,5 +17,6 @@
   :source-paths ["src/clojure" "resources/views"]
   :java-source-paths ["src/java"]
   :ring {:handler groxy.web/app}
+  :bin {:name "groxy"}
   :main groxy.core)
 
