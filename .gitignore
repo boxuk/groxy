@@ -14,3 +14,4 @@ pom.xml.asc
 /nbproject/private/
 /build/
 .DS_Store
+lein
