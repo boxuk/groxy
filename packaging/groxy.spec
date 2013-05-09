@@ -41,6 +41,8 @@ cp target/%{name} $RPM_BUILD_ROOT%{_prefix}/%{name}/bin/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d/
 cp %{_sourcedir}/chkconfig.conf $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
 
+chkconfig --add groxy
+
 %files
 %defattr(-,root,root,-)
 %attr(0755, root, root) /etc/init.d/%{name}
