@@ -1,6 +1,7 @@
 
 (ns groxy.stats
-  (:require [groxy.data :as data])
+  (:require [groxy.data :as data]
+            [groxy.cache :as cache])
   (:import (java.lang.management ManagementFactory RuntimeMXBean)))
 
 (defn store2map [k v]
@@ -20,6 +21,7 @@
 (defn server []
   (let [rt (Runtime/getRuntime)]
     {:uptime (.getUptime (ManagementFactory/getRuntimeMXBean))
+     :cache {:items (count (keys @cache/cache-store))}
      :memory {:total (.totalMemory rt)
               :free (.freeMemory rt)
               :max (.maxMemory rt)
