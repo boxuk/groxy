@@ -12,9 +12,6 @@
 
 (def MAX_SEARCH_RESULTS 20)
 
-;(def FOLDER_GOOGLEMAIL "[Google Mail]/All Mail")
-(def FOLDER_GMAIL "[Gmail]/All Mail")
-
 ;; Message Parsing
 ;; ---------------
 
@@ -90,9 +87,15 @@
             (new-store-for email token)))
     (new-store-for email token)))
 
-(defn- folder-for [email token folder-name]
+(defn- folder-for [email token]
   (let [store (store-for email token)
-        folder (.getFolder store folder-name)]
+        ; the 'All Mail' folder always seems to be here...
+        folder (-> store
+                 (.getDefaultFolder)
+                 (.list)
+                 (second)
+                 (.list)
+                 (first))]
     (.open folder (Folder/READ_ONLY))
     folder))
 
@@ -100,15 +103,15 @@
 ;; ------
 
 (defn search [email token query]
-  (let [all-mail (folder-for email token FOLDER_GMAIL)
-        search (GmailSearchCommand. FOLDER_GMAIL query)
+  (let [all-mail (folder-for email token)
+        search (GmailSearchCommand. (.getFullName all-mail) query)
         response (.doCommand all-mail search)
         ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
     (doall
       (map (partial id2map email all-mail) ids))))
 
 (defn message [email token id]
-  (let [all-mail (folder-for email token FOLDER_GMAIL)
+  (let [all-mail (folder-for email token)
         data (id2map email all-mail id)
         attchs (attachments (imap/message all-mail id)
                             {:with-data true})]

@@ -70,11 +70,6 @@ But don't select the Gmail service listed, enter the scope explicitly as...
 https://mail.google.com/
 ```
 
-### Gmail/Google Mail
-
-Annoyingly, Gmail accounts don't all have the same name for their IMAP "All Mail" folder.  At the moment Groxy
-only uses "[Gmail]/All Mail", but if you're using the source you can [change this yourself](https://github.com/boxuk/groxy/blob/master/src/clojure/groxy/gmail.clj#L14).
-
 ## Java Classes
 
 The library uses some Java classes to implement the custom Gmail X-GM-RAW IMAP extension.
