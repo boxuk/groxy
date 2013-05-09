@@ -1,8 +1,8 @@
 
 (ns groxy.stats
-  (:require [groxy.data :as data]
-            [groxy.cache :as cache])
-  (:import (java.lang.management ManagementFactory RuntimeMXBean)))
+  (:require [fisher.core :as stats]
+            [groxy.data :as data]
+            [groxy.cache :as cache]))
 
 (defn store2map [k v]
   {:email k
@@ -19,12 +19,7 @@
 ;; ------
 
 (defn server []
-  (let [rt (Runtime/getRuntime)]
-    {:uptime (.getUptime (ManagementFactory/getRuntimeMXBean))
-     :cache {:items (count (keys @cache/cache-store))}
-     :memory {:total (.totalMemory rt)
-              :free (.freeMemory rt)
-              :max (.maxMemory rt)
-              :used (- (.totalMemory rt) (.freeMemory rt))}
-     :stores (store-summary)}))
+  (merge (stats/general)
+         {:cache {:items (count (keys @cache/cache-store))}
+          :stores (store-summary)}))
 

@@ -9,6 +9,7 @@
                  [confo "0.1.1"]
                  [javax.mail/mail "1.4.7"]
                  [wrap-worker "0.1.0"]
+                 [fisher "0.1.0"]
                  [ring-middleware-format "0.3.0"]
                  [org.clojure/tools.logging "0.2.6"]
                  [org.clojure/core.cache "0.6.3"]]
