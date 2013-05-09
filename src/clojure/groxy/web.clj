@@ -32,10 +32,11 @@
 
 (defn wrap-logging [handler]
   (fn [req]
-    (info (:request-method req)
-          (:uri req)
-          (:params req))
-    (handler req)))
+    (info (merge
+            {:type "request"}
+            (select-keys req [:request-method :uri :params])))
+    (time
+      (handler req))))
 
 ;; WWW Pages
 ;; ---------
