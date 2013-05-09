@@ -2,8 +2,8 @@
 (ns groxy.gmail
   (:require [groxy.data :as data]
             [groxy.util :as util]
-            [groxy.cache :as cache]
             [groxy.imap :as imap]
+            [groxy.cache :as cache]
             [clojure.string :as string])
   (:import (javax.mail FetchProfile FetchProfile$Item)
            (javax.mail Folder)
@@ -69,8 +69,9 @@
    :attachments (attachments msg)})
 
 (defn- id2map [email ^IMAPFolder folder id]
-  (cache/with-cache [(str email "-msg-" id)]
-                    (message2map (imap/message folder id))))
+  (cache/with-key
+    (cache/create-key email "-" id)
+    (message2map (imap/message folder id))))
 
 ;; Store/Folder Handling
 ;; ---------------------

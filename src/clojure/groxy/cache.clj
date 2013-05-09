@@ -1,22 +1,31 @@
 
-(ns groxy.cache)
+(ns groxy.cache
+  (:use [clojure.tools.logging :only [info]])
+  (:require [clojure.core.cache :as cache]))
 
-(def data (ref {}))
+(def cache-store
+  (atom (cache/fifo-cache-factory {})))
 
 ;; Public
 ;; ------
 
-(defn cache-write [id to-cache]
-  (dosync
-    (alter data assoc-in id to-cache)))
+(def create-key (comp keyword str))
 
-(defn cache-read [id]
-  (get-in @data id))
-
-(defmacro with-cache [id & body]
-  `(if-let [cached# (cache-read ~id)]
-     (with-meta cached# {:cached true})
-     (let [to-cache# (doall ~@body)]
-       (cache-write ~id to-cache#)
-       (with-meta to-cache# {:cached false}))))
+(defmacro with-key [cache-id & body]
+  `(if (cache/has? @cache-store
+                    ~cache-id)
+      (do
+        (info {:type "cache.hit"
+               :key ~cache-id})
+        (get (cache/hit @cache-store ~cache-id)
+             ~cache-id))
+      (do
+        (info {:type "cache.miss"
+               :key ~cache-id})
+        (let [cache-data# (do ~@body)]
+          (reset! cache-store
+                  (cache/miss @cache-store
+                              ~cache-id
+                              cache-data#))
+          cache-data#))))
 
