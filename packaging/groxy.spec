@@ -26,7 +26,6 @@ A JSON web API that proxies OAuth IMAP access to Gmail.
 curl -o %{_lein} https://raw.github.com/technomancy/leiningen/stable/bin/lein
 chmod 755 %{_lein}
 PATH=$PATH:.
-rm -rf ~/.m2
 %{_lein} bin
 
 %install
