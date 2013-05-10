@@ -1,7 +1,7 @@
 Summary:       Gmail API Proxy
 Name:          groxy
 Version:       %{_ver}
-Release:       1
+Release:       2
 BuildArch:     noarch
 Group:         Internet / Applications
 Vendor:        Box UK
@@ -18,10 +18,6 @@ BuildRequires: java-1.6.0-openjdk-devel
 
 %description
 A JSON web API that proxies OAuth IMAP access to Gmail.
-
-%pretrans
-service groxy stop
-chkconfig groxy off
 
 %prep
 %setup
@@ -41,12 +37,24 @@ cp target/%{name} $RPM_BUILD_ROOT%{_prefix}/%{name}/bin/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d/
 cp %{_sourcedir}/chkconfig.conf $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
 
-chkconfig --add groxy
+chmod 755 $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
+
+%post
+if [ "$1" = "1" ]; then
+	chkconfig --add groxy
+fi
+exit 0
 
 %files
 %defattr(-,root,root,-)
 %attr(0755, root, root) /etc/init.d/%{name}
 %attr(0744, root, root) %{_prefix}/%{name}/bin/%{name}
+
+%pretrans
+if [ -f %{_prefix}/%{name}/bin/%{name} ]; then
+	service groxy stop
+	chkconfig groxy off
+fi
 
 %posttrans
 service groxy start
