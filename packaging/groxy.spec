@@ -1,7 +1,7 @@
 Summary:       Gmail API Proxy
 Name:          groxy
 Version:       %{_ver}
-Release:       1
+Release:       2
 BuildArch:     noarch
 Group:         Internet / Applications
 Vendor:        Box UK
