@@ -52,8 +52,10 @@ exit 0
 %attr(0744, root, root) %{_prefix}/%{name}/bin/%{name}
 
 %pretrans
-service groxy stop
-chkconfig groxy off
+if [ -f %{_prefix}/%{name}/bin/%{name} ]; then
+	service groxy stop
+	chkconfig groxy off
+fi
 
 %posttrans
 service groxy start
