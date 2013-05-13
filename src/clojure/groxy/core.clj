@@ -12,13 +12,13 @@
                    :port 4545))
 
 (defn configure-logging []
-  (org.apache.log4j.BasicConfigurator/configure)
-  (set-logger! :level :debug
-               :out (org.apache.log4j.DailyRollingFileAppender.
+  (set-logger! "groxy"
+               :level :debug
+               :out (org.apache.log4j.RollingFileAppender.
                       (org.apache.log4j.EnhancedPatternLayout.
                         org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
                       (:logfile config)
-                      "'.'yyyy-MM")
+                      true)
                :pattern "%d - %m%n"))
 
 (defn start []

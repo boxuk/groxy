@@ -16,6 +16,9 @@
 (defn ->int [i]
   (Integer/parseInt i))
 
+(defn millis []
+  (System/currentTimeMillis))
+
 (defmacro defhandler [fn-name params & body]
   `(defn ~fn-name [~@params]
      (try
@@ -29,11 +32,14 @@
 
 (defn wrap-logging [handler]
   (fn [req]
-    (info (merge
-            {:type "request"}
-            (select-keys req [:request-method :uri :params])))
-    (time
-      (handler req))))
+    (let  [log (merge {:type "request"
+                       :start-time (millis)}
+                      (select-keys req [:request-method :uri :params]))
+           res (handler req)]
+      (info (merge {:end-time (millis)
+                    :total-time (- (millis)
+                                   (:start-time log))} log))
+      res)))
 
 (defn json-response [body]
   (-> (response (json/generate-string body))
