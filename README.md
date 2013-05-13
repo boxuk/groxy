@@ -43,14 +43,14 @@ access_token - A valid OAuth access token
 query - Your query string (supports X-GM-RAW extension)
 ```
 
-### Messages
+### Attachments
 
 ```
-GET /api/messages/:id
+GET /api/messages/:messageid/attachments/:attachmentid
 ```
 
-Where _:id_ is the ID of the message you want to fetch.  You will also need 
-specify the specified parameters.
+You will also need specify the specified parameters.  This will stream back the
+base64 encoded content for the attachment.
 
 ```
 email - Your Gmail email address

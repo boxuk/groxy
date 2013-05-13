@@ -1,10 +1,11 @@
 
 (ns groxy.gmail
   (:require [groxy.data :as data]
-            [groxy.util :as util]
             [groxy.imap :as imap]
             [groxy.cache :as cache]
-            [clojure.string :as string])
+            [clojure.java.io :as io]
+            [clojure.string :as string]
+            [ring.util.response :as response])
   (:import (javax.mail FetchProfile FetchProfile$Item)
            (javax.mail Folder)
            (com.sun.mail.imap IMAPMessage IMAPFolder)
@@ -45,18 +46,26 @@
     {:name (string/trim from)
      :address address}))
 
-(defn- attachment2map [with-data attachment]
+(defn- attachment2map [attachment]
   {:name (.getDescription attachment)
-   :content-type (content-type attachment)
-   :data (if with-data
-           (util/base64 attachment))})
+   :content-type (content-type attachment)})
 
-(defn- attachments [^IMAPMessage msg & [options]]
+(defn- with-id
+  "Add an incrememting ID to each attachment"
+  [acc attachment]
+  (conj
+    acc
+    (assoc attachment
+           :id
+           (inc (count acc)))))
+
+(defn- attachments [^IMAPMessage msg]
   (if (is-plain-text msg)
     []
     (->> (mime-parts msg)
          (filter (complement is-plain-text))
-         (map (partial attachment2map (:with-data options))))))
+         (map attachment2map)
+         (reduce with-id []))))
 
 (defn- message2map [^IMAPMessage msg]
   {:id (.getMessageNumber msg)
@@ -110,10 +119,13 @@
     (doall
       (map (partial id2map email all-mail) ids))))
 
-(defn message [email token id]
+(defn attachment [email token messageid attachmentid]
   (let [all-mail (folder-for email token)
-        data (id2map email all-mail id)
-        attchs (attachments (imap/message all-mail id)
-                            {:with-data true})]
-    (merge data {:attachments attchs})))
+        message (imap/message all-mail messageid)
+        attachments (->> message
+                         (mime-parts)
+                         (filter (complement is-plain-text)))
+        attachment (nth attachments attachmentid
+                        (dec attachmentid))]
+    {:body (.getContent attachment)}))
 

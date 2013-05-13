@@ -4,31 +4,28 @@
         ring.middleware.reload
         ring.middleware.stacktrace
         [clojure.tools.logging :only [info error]]
-        [ring.util.response :only [response status]]
+        [ring.util.response :only [response content-type status]]
         [net.cgrand.enlive-html :only [deftemplate]]
-        [wrap-worker.core :only [wrap-worker]]
-        [ring.middleware.format-response :only [wrap-json-response]])
+        [wrap-worker.core :only [wrap-worker]])
   (:require (compojure [handler :as handler]
                        [route :as route])
+            [cheshire.core :as json]
             [groxy.gmail :as gmail]
             [groxy.stats :as stats]))
+
+(defn ->int [i]
+  (Integer/parseInt i))
 
 (defmacro defhandler [fn-name params & body]
   `(defn ~fn-name [~@params]
      (try
-       (response (do ~@body))
+       (do ~@body)
        (catch Exception e#
          (let [msg# (.getMessage e#)
                error# (response {:message msg#})]
            (error "Error:" msg#)
            (error (map str (.getStackTrace e#)))
            (status error# 400))))))
-
-(defn params-for [req]
-  (let [params (:params req) ]
-    [(:email params)
-     (:access_token params)
-     (:query params)]))
 
 (defn wrap-logging [handler]
   (fn [req]
@@ -37,6 +34,10 @@
             (select-keys req [:request-method :uri :params])))
     (time
       (handler req))))
+
+(defn json-response [body]
+  (-> (response (json/generate-string body))
+      (content-type "application/json")))
 
 ;; WWW Pages
 ;; ---------
@@ -47,15 +48,22 @@
 ;; ------------
 
 (defhandler api-stats [req]
-  (stats/server))
+  (json-response
+    (stats/server)))
 
-(defhandler api-search [req]
-  (let [[email token query] (params-for req)]
-    (gmail/search email token query)))
+(defhandler api-search [{:keys [params]}]
+  (json-response
+    (gmail/search
+      (:email params)
+      (:access_token params)
+      (:query params))))
 
-(defhandler api-message [id req]
-  (let [[email token] (params-for req)]
-    (gmail/message email token (Integer/parseInt id))))
+(defhandler api-attachment [{:keys [params]}]
+  (gmail/attachment
+    (:email params)
+    (:access_token params)
+    (->int (:messageid params))
+    (->int (:attachmentid params))))
 
 ;; Routes
 ;; ------
@@ -68,13 +76,16 @@
   (context "/api" []
     (GET "/" [] api-stats)
     (GET "/messages" [] api-search)
-    (GET "/messages/:id" [id] (partial api-message id))))
+    (GET "/messages/:messageid/attachments/:attachmentid" [] api-attachment)))
 
 (defroutes app-routes
   (routes
     www-routes
-    (wrap-json-response api-routes)
+    api-routes
     (route/not-found "404")))
+
+;; Public
+;; ------
 
 (def app
   (-> #'app-routes

@@ -3,7 +3,7 @@
   (:use confo.core
         clojure.tools.logging
         clj-logging-config.log4j
-        [org.httpkit.server :only [run-server]])
+        [ring.adapter.jetty :only [run-jetty]])
   (:require [groxy.web :as web])
   (:gen-class))
 
@@ -23,7 +23,7 @@
 
 (defn start []
   (configure-logging)
-  (run-server web/app config))
+  (run-jetty web/app config))
 
 (defn -main []
   (start))
