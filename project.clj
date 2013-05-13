@@ -11,6 +11,7 @@
                  [wrap-worker "0.1.0"]
                  [fisher "0.1.0"]
                  [ring-middleware-format "0.3.0"]
+                 [clj-logging-config "1.9.10"]
                  [org.clojure/tools.logging "0.2.6"]
                  [org.clojure/core.cache "0.6.3"]]
   :plugins [[lein-marginalia "0.7.1"]
