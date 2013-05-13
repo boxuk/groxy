@@ -119,13 +119,16 @@
     (doall
       (map (partial id2map email all-mail) ids))))
 
+(defn message [email token messageid]
+  (let [all-mail (folder-for email token)]
+    (id2map email all-mail messageid)))
+
 (defn attachment [email token messageid attachmentid]
   (let [all-mail (folder-for email token)
         message (imap/message all-mail messageid)
         attachments (->> message
                          (mime-parts)
                          (filter (complement is-plain-text)))
-        attachment (nth attachments attachmentid
-                        (dec attachmentid))]
+        attachment (nth attachments (dec attachmentid))]
     {:body (.getContent attachment)}))
 

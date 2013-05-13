@@ -23,6 +23,13 @@ http://localhost:4545
 
 ## Endpoints
 
+All endpoints require you send the following parameters:
+
+```
+email - Your Gmail email address
+access_token - A valid OAuth access token
+```
+
 ### API Status
 
 ```
@@ -38,9 +45,19 @@ GET /api/messages
 With parameters:
 
 ```
-email - Your Gmail email address
-access_token - A valid OAuth access token
 query - Your query string (supports X-GM-RAW extension)
+```
+
+### Single Messages
+
+```
+GET /api/messages/:messageid
+```
+
+With parameters:
+
+```
+messageid - The ID of the message to fetch
 ```
 
 ### Attachments
@@ -50,11 +67,11 @@ GET /api/messages/:messageid/attachments/:attachmentid
 ```
 
 You will also need specify the specified parameters.  This will stream back the
-base64 encoded content for the attachment.
+raw content for the attachment.
 
 ```
-email - Your Gmail email address
-access_token - A valid OAuth access token
+messageid - The ID of the attachments message
+attachmentid - The ID of the attachment to fetch
 ```
 
 ## Access Tokens

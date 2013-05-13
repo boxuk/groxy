@@ -64,6 +64,13 @@
       (:access_token params)
       (:query params))))
 
+(defhandler api-message [{:keys [params]}]
+  (json-response
+    (gmail/message
+      (:email params)
+      (:access_token params)
+      (->int (:messageid params)))))
+
 (defhandler api-attachment [{:keys [params]}]
   (gmail/attachment
     (:email params)
@@ -82,6 +89,7 @@
   (context "/api" []
     (GET "/" [] api-stats)
     (GET "/messages" [] api-search)
+    (GET "/messages/:messageid" [] api-message)
     (GET "/messages/:messageid/attachments/:attachmentid" [] api-attachment)))
 
 (defroutes app-routes
