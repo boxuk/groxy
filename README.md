@@ -94,6 +94,7 @@ Configuration is supplied via environment variables with the _GROXY_ prefix.
 ```
 GROXY_PORT=4545
 GROXY_LOGFILE="logs/access.log"
+GROXY_LOGLEVEL="debug"
 GROXY_LOGPATTERN="%d %m"
 ```
 

@@ -5,7 +5,7 @@
                  [compojure "1.1.5"]
                  [ring/ring-devel "1.1.8"]
                  [enlive "1.0.1"]
-                 [confo "0.1.1"]
+                 [confo "0.5.0"]
                  [javax.mail/mail "1.4.7"]
                  [wrap-worker "0.1.0"]
                  [fisher "0.1.0"]
