@@ -1,5 +1,6 @@
 
 (ns groxy.gmail
+  (:use [clojure.tools.logging :only [info]])
   (:require [groxy.data :as data]
             [groxy.imap :as imap]
             [groxy.cache :as cache]
@@ -84,6 +85,8 @@
 
 (defn- new-store-for [email token]
   (let [new-store (imap/store email token)]
+    (info {:type "store.create"
+           :email email})
     (dosync
       (alter data/stores assoc-in [email :store] new-store))
     new-store))
@@ -92,7 +95,8 @@
   (if-let [store (get-in @data/stores [email :store])]
     (if (.isConnected store)
         store
-        (do (.close store)
+        (do (info {:type "store.close"
+                   :email email}) (.close store)
             (new-store-for email token)))
     (new-store-for email token)))
 

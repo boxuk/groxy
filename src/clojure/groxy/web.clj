@@ -24,21 +24,21 @@
      (try
        (do ~@body)
        (catch Exception e#
-         (let [msg# (.getMessage e#)
-               error# (response {:message msg#})]
-           (error "Error:" msg#)
-           (error (map str (.getStackTrace e#)))
-           (status error# 400))))))
+         (let [msg# (.getMessage e#)]
+           (error {:type "error"
+                   :message msg#
+                   :stack (map str (.getStackTrace e#))})
+           (status (response {:message msg#})
+                   400))))))
 
 (defn wrap-logging [handler]
   (fn [req]
-    (let  [log (merge {:type "request"
-                       :start-time (millis)}
-                      (select-keys req [:request-method :uri :params]))
+    (let  [start-time (millis)
            res (handler req)]
-      (info (merge {:end-time (millis)
-                    :total-time (- (millis)
-                                   (:start-time log))} log))
+      (info (merge {:type "request"
+                    :start-time start-time
+                    :total-time (- (millis) start-time)}
+                   (select-keys req [:request-method :uri :params])))
       res)))
 
 (defn json-response [body]

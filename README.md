@@ -87,6 +87,19 @@ But don't select the Gmail service listed, enter the scope explicitly as...
 https://mail.google.com/
 ```
 
+## Configuration
+
+Configuration is supplied via environment variables with the _GROXY_ prefix.
+
+```
+GROXY_PORT=4545
+GROXY_LOGFILE="logs/access.log"
+```
+
+## Logging
+
+Logging is configured to use log4j, and writes to the log file configured by _GROXY_LOGFILE_.
+
 ## Java Classes
 
 The library uses some Java classes to implement the custom Gmail X-GM-RAW IMAP extension.

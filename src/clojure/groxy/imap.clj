@@ -1,5 +1,6 @@
 
 (ns groxy.imap
+  (:use [clojure.tools.logging :only [info]])
   (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
            (java.util Properties)
            (javax.mail Session FetchProfile FetchProfile$Item)
@@ -24,6 +25,8 @@
 (defn store [email token]
   (let [session (Session/getInstance (properties token))
         store (IMAPSSLStore. session nil)]
+    (info {:type "store.connect"
+           :email email})
     (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email "")
     store))
 

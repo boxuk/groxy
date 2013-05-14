@@ -12,14 +12,13 @@
                    :port 4545))
 
 (defn configure-logging []
-  (set-logger! "groxy"
-               :level :debug
-               :out (org.apache.log4j.RollingFileAppender.
-                      (org.apache.log4j.EnhancedPatternLayout.
-                        org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
-                      (:logfile config)
-                      true)
-               :pattern "%d - %m%n"))
+  (let [pattern "%d [%c: %l %n] %m\n"]
+    (set-logger! "groxy"
+                 :level :debug
+                 :out (org.apache.log4j.RollingFileAppender.
+                        (org.apache.log4j.EnhancedPatternLayout. pattern)
+                        (:logfile config)
+                        true))))
 
 (defn start []
   (configure-logging)
