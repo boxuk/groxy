@@ -10,6 +10,7 @@
   (:import (javax.mail FetchProfile FetchProfile$Item)
            (javax.mail Folder)
            (com.sun.mail.imap IMAPMessage IMAPFolder)
+           (javax.mail.internet MimeMultipart)
            (com.boxuk.groxy GmailSearchCommand)))
 
 (def MAX_SEARCH_RESULTS 20)
@@ -80,6 +81,13 @@
     (cache/create-key email "-" id)
     (message2map (imap/message folder id))))
 
+(defn- content-stream-for
+  [attachment]
+  (let [stream (.getContent attachment)]
+    (if (= MimeMultipart (class stream))
+      ""
+      stream)))
+
 ;; Store/Folder Handling
 ;; ---------------------
 
@@ -134,5 +142,5 @@
                          (mime-parts)
                          (filter (complement is-plain-text)))
         attachment (nth attachments (dec attachmentid))]
-    {:body (.getContent attachment)}))
+    {:body (content-stream-for attachment)}))
 
