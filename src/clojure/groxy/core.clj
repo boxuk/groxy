@@ -9,16 +9,17 @@
 
 (def config (confo :groxy
                    :logfile "logs/access.log"
+                   :logpattern "%d [%c: %l %n] %m\n"
                    :port 4545))
 
 (defn configure-logging []
-  (let [pattern "%d [%c: %l %n] %m\n"]
-    (set-logger! "groxy"
-                 :level :debug
-                 :out (org.apache.log4j.RollingFileAppender.
-                        (org.apache.log4j.EnhancedPatternLayout. pattern)
-                        (:logfile config)
-                        true))))
+  (set-logger! "groxy"
+               :level :debug
+               :out (org.apache.log4j.RollingFileAppender.
+                      (org.apache.log4j.EnhancedPatternLayout.
+                        (:logpattern config))
+                      (:logfile config)
+                      true)))
 
 (defn start []
   (configure-logging)
