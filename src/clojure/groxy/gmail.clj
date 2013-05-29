@@ -9,8 +9,8 @@
             [ring.util.response :as response])
   (:import (javax.mail FetchProfile FetchProfile$Item)
            (javax.mail Folder)
-           (com.sun.mail.imap IMAPMessage IMAPFolder)
            (javax.mail.internet MimeMultipart)
+           (com.sun.mail.imap IMAPMessage IMAPFolder IMAPBodyPart)
            (com.boxuk.groxy GmailSearchCommand)))
 
 (def MAX_SEARCH_RESULTS 20)
@@ -48,8 +48,8 @@
     {:name (string/trim from)
      :address address}))
 
-(defn- attachment2map [attachment]
-  {:name (.getDescription attachment)
+(defn- attachment2map [^IMAPBodyPart attachment]
+  {:name (.getFileName attachment)
    :content-type (content-type attachment)})
 
 (defn- with-id
