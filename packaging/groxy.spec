@@ -10,11 +10,10 @@ Source:        %{name}-%{version}.tar.gz
 Source1:	   chkconfig.conf
 AutoReqProv:   no
 
-BuildRequires: java-1.6.0-openjdk-devel
+BuildRequires: java-1.6.0-openjdk-devel, boxuk-leiningen
 
 %define _gitrepository .
 %define _prefix /opt/BoxUK
-%define _lein lein
 
 %description
 A JSON web API that proxies OAuth IMAP access to Gmail.
@@ -23,10 +22,7 @@ A JSON web API that proxies OAuth IMAP access to Gmail.
 %setup
 
 %build
-curl -o %{_lein} https://raw.github.com/technomancy/leiningen/stable/bin/lein
-chmod 755 %{_lein}
-PATH=$PATH:.
-%{_lein} bin
+lein bin
 
 %install
 rm -rf $RPM_BUILD_ROOT
