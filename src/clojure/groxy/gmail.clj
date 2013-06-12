@@ -45,7 +45,7 @@
 
 (defn- email2map [email]
   (let [[_ from address] (re-matches #"(.*)?<(.*)>" (.toString email))]
-    {:name (string/trim from)
+    {:name (string/trim (str from))
      :address address}))
 
 (defn- attachment2map [^IMAPBodyPart attachment]
