@@ -110,13 +110,7 @@
 
 (defn- folder-for [email token]
   (let [store (store-for email token)
-        ; the 'All Mail' folder always seems to be here...
-        folder (-> store
-                 (.getDefaultFolder)
-                 (.list)
-                 (second)
-                 (.list)
-                 (first))]
+        folder (.getFolder store "[Gmail]/All Mail")]
     (.open folder (Folder/READ_ONLY))
     folder))
 
