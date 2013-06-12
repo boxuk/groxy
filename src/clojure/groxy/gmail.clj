@@ -7,8 +7,7 @@
             [clojure.java.io :as io]
             [clojure.string :as string]
             [ring.util.response :as response])
-  (:import (javax.mail FetchProfile FetchProfile$Item)
-           (javax.mail Folder)
+  (:import (javax.mail FetchProfile FetchProfile$Item Folder Multipart)
            (javax.mail.internet MimeMultipart)
            (com.sun.mail.imap IMAPMessage IMAPFolder IMAPBodyPart)
            (com.boxuk.groxy GmailSearchCommand)))
@@ -35,13 +34,14 @@
       (.getBodyPart multipart i))))
 
 (defn- message-body [^IMAPMessage msg]
-  (if (is-plain-text msg)
-      (.getContent msg)
-      (if-let [part (->> (mime-parts msg)
-                         (filter is-plain-text)
-                         (first))]
-        (.getContent part)
-        "")))
+  (let [c (.getContent msg)]
+    (if (instance? Multipart c)
+      (->> msg
+           (mime-parts)
+           (map #(.getContent %))
+           (filter string?)
+           (first))
+      (str c))))
 
 (defn- email2map [email]
   (let [[_ from address] (re-matches #"(.*)?<(.*)>" (.toString email))]
