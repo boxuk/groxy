@@ -14,6 +14,10 @@
 
 (def MAX_SEARCH_RESULTS 20)
 
+(def error-message {:from "error@example.com"
+                    :subject "Error parsing message"
+                    :attachments []})
+
 ;; Message Parsing
 ;; ---------------
 
@@ -33,20 +37,36 @@
     (for [i (range 0 (.getCount multipart))]
       (.getBodyPart multipart i))))
 
+(defn- text-message [contents]
+  (->> contents
+       (filter string?)
+       (first)))
+
+(defn- html-message [contents]
+  (if-let [part  (->> contents
+                      (filter #(instance? MimeMultipart %))
+                      (filter #(= "multipart/alternative" (content-type %)))
+                      (first))]
+    (.getContent
+      (.getBodyPart part 1))))
+
 (defn- message-body [^IMAPMessage msg]
   (let [c (.getContent msg)]
     (if (instance? Multipart c)
-      (->> msg
-           (mime-parts)
-           (map #(.getContent %))
-           (filter string?)
-           (first))
+      (let [contents (->> (mime-parts msg)
+                          (map #(.getContent %)))]
+        (if-let [html (html-message contents)]
+          html
+          (text-message contents)))
       (str c))))
 
 (defn- email2map [email]
   (let [[_ from address] (re-matches #"(.*)?<(.*)>" (.toString email))]
     {:name (string/trim (str from))
      :address address}))
+
+;; Attachments
+;; -----------
 
 (defn- attachment2map [^IMAPBodyPart attachment]
   {:name (.getFileName attachment)
@@ -61,20 +81,32 @@
            :id
            (inc (count acc)))))
 
+(defn- is-attachment? [^IMAPMessage msg]
+  (and (not (is-plain-text msg))
+       (not (= "multipart/alternative" (content-type msg)))))
+
+(defn- attachments-for [^IMAPMessage msg]
+  (->> (mime-parts msg)
+       (filter is-attachment?)))
+
 (defn- attachments [^IMAPMessage msg]
   (if (is-plain-text msg)
     []
-    (->> (mime-parts msg)
-         (filter (complement is-plain-text))
+    (->> (attachments-for msg)
          (map attachment2map)
          (reduce with-id []))))
 
 (defn- message2map [^IMAPMessage msg]
-  {:id (.getMessageNumber msg)
-   :from (email2map (first (.getFrom msg)))
-   :subject (.getSubject msg)
-   :body (message-body msg)
-   :attachments (attachments msg)})
+  (try
+    {:id (.getMessageNumber msg)
+     :from (email2map (first (.getFrom msg)))
+     :subject (.getSubject msg)
+     :body (message-body msg)
+     :attachments (attachments msg)}
+    (catch Exception e
+      (merge error-message
+             {:id (.getMessageNumber msg)
+              :body (.getMessage e)}))))
 
 (defn- id2map [email ^IMAPFolder folder id]
   (cache/with-key
@@ -132,9 +164,7 @@
 (defn attachment [email token messageid attachmentid]
   (let [all-mail (folder-for email token)
         message (imap/message all-mail messageid)
-        attachments (->> message
-                         (mime-parts)
-                         (filter (complement is-plain-text)))
-        attachment (nth attachments (dec attachmentid))]
+        attachment (nth (attachments-for message)
+                        (dec attachmentid))]
     {:body (content-stream-for attachment)}))
 
