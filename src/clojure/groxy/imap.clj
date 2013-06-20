@@ -23,12 +23,11 @@
 ;; ------
 
 (defn store [email token]
-  (let [session (Session/getInstance (properties token))
-        store (IMAPSSLStore. session nil)]
+  (let [session (Session/getInstance (properties token))]
     (info {:type "store.connect"
            :email email})
-    (.connect store GMAIL_IMAP_HOST GMAIL_IMAP_PORT email "")
-    store))
+    (doto (IMAPSSLStore. session nil)
+      (.connect GMAIL_IMAP_HOST GMAIL_IMAP_PORT email ""))))
 
 (defn message [^IMAPFolder folder id]
   (.getMessage folder id))
