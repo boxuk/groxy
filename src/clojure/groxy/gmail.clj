@@ -165,11 +165,11 @@
 ;; Public
 ;; ------
 
-(defn inbox [email token]
+(defn inbox [email token query]
   (search*
     email
     (inbox-for email token)
-    ""))
+    query))
 
 (defn search [email token query]
   (search*

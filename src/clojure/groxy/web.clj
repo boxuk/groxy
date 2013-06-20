@@ -61,7 +61,8 @@
   (json-response
     (gmail/inbox
       (:email params)
-      (:access_token params))))
+      (:access_token params)
+      (:query params))))
 
 (defhandler api-search [{:keys [params]}]
   (json-response
