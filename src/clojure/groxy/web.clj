@@ -57,6 +57,12 @@
   (json-response
     (stats/server)))
 
+(defhandler api-inbox [{:keys [params]}]
+  (json-response
+    (gmail/inbox
+      (:email params)
+      (:access_token params))))
+
 (defhandler api-search [{:keys [params]}]
   (json-response
     (gmail/search
@@ -88,6 +94,7 @@
 (defroutes api-routes
   (context "/api" []
     (GET "/" [] api-stats)
+    (GET "/inbox" [] api-inbox)
     (GET "/messages" [] api-search)
     (GET "/messages/:messageid" [] api-message)
     (GET "/messages/:messageid/attachments/:attachmentid" [] api-attachment)))

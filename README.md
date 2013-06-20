@@ -36,7 +36,21 @@ access_token - A valid OAuth access token
 GET /api
 ```
 
+### Inbox
+
+```
+GET /api/inbox
+```
+
+With parameters:
+
+```
+query - Your query string (supports X-GM-RAW extension)
+```
+
 ### Searching
+
+The endpoint searches the 'All Mail' folder.
 
 ```
 GET /api/messages

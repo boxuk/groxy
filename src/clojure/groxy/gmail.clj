@@ -140,30 +140,51 @@
             (new-store-for email token)))
     (new-store-for email token)))
 
-(defn- folder-for [email token]
-  (let [store (store-for email token)
-        folder (.getFolder store "[Gmail]/All Mail")]
+(defn- folder-for* [folder-name email token]
+  (let [folder (.getFolder
+                 (store-for email token)
+                 folder-name
+                 )]
     (.open folder (Folder/READ_ONLY))
     folder))
+
+(def allmail-for (partial folder-for* "[Gmail]/All Mail"))
+
+(def inbox-for (partial folder-for* "INBOX"))
+
+;; Search
+;; ------
+
+(defn- search* [email folder query]
+  (let [command (GmailSearchCommand. (.getFullName folder) query)
+        response (.doCommand folder command)
+        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
+    (doall
+      (map (partial id2map email folder) ids))))
 
 ;; Public
 ;; ------
 
+(defn inbox [email token]
+  (search*
+    email
+    (inbox-for email token)
+    ""))
+
 (defn search [email token query]
-  (let [all-mail (folder-for email token)
-        search (GmailSearchCommand. (.getFullName all-mail) query)
-        response (.doCommand all-mail search)
-        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
-    (doall
-      (map (partial id2map email all-mail) ids))))
+  (search*
+    email
+    (allmail-for email token)
+    query))
 
 (defn message [email token messageid]
-  (let [all-mail (folder-for email token)]
-    (id2map email all-mail messageid)))
+  (id2map
+    email
+    (allmail-for email token)
+    messageid))
 
 (defn attachment [email token messageid attachmentid]
-  (let [all-mail (folder-for email token)
-        message (imap/message all-mail messageid)
+  (let [message (imap/message (allmail-for email token) messageid)
         attachment (nth (attachments-for message)
                         (dec attachmentid))]
     {:body (content-stream-for attachment)}))
