@@ -1,4 +1,3 @@
-
 (ns groxy.imap
   (:use [clojure.tools.logging :only [info]])
   (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
@@ -12,12 +11,10 @@
 (def GMAIL_IMAP_PORT 993)
 
 (defn- properties [token]
-  (let [props (Properties.)]
-     (doto props
-      (.put "mail.imaps.sasl.enable" "true")
-      (.put "mail.imaps.sasl.mechanisms", "XOAUTH2")
-      (.put OAuth2SaslClientFactory/OAUTH_TOKEN_PROP token))
-    props))
+  (doto (Properties.)
+    (.put "mail.imaps.sasl.enable" "true")
+    (.put "mail.imaps.sasl.mechanisms", "XOAUTH2")
+    (.put OAuth2SaslClientFactory/OAUTH_TOKEN_PROP token)))
 
 ;; Public
 ;; ------
