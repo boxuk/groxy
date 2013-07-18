@@ -162,20 +162,19 @@
     (doall
       (map (partial id2map email folder) ids))))
 
+(defn folder-search [get-folder]
+  (fn [email token query]
+    (let [folder (get-folder email token)
+          results (search* email folder query)]
+      (.close folder false)
+      results)))
+
 ;; Public
 ;; ------
 
-(defn inbox [email token query]
-  (search*
-    email
-    (inbox-for email token)
-    query))
+(def inbox (folder-search inbox-for))
 
-(defn search [email token query]
-  (search*
-    email
-    (allmail-for email token)
-    query))
+(def search (folder-search allmail-for))
 
 (defn message [email token messageid]
   (id2map
