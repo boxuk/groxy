@@ -152,7 +152,7 @@
   (fn [email token query]
     (folder-for folder-name email token
       folder
-      (let [command (GmailSearchCommand. (.getFullName folder) query)
+      (let [command (GmailSearchCommand. folder-name query)
             response (.doCommand folder command)
             ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
         (doall
