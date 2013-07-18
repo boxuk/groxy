@@ -1,8 +1,6 @@
 
 (ns groxy.web
   (:use compojure.core
-        ring.middleware.reload
-        ring.middleware.stacktrace
         [clojure.tools.logging :only [info error]]
         [ring.util.response :only [response content-type status]]
         [net.cgrand.enlive-html :only [deftemplate]]
@@ -111,8 +109,6 @@
 
 (def app
   (-> #'app-routes
-    (wrap-reload)
-    (wrap-stacktrace)
     (wrap-logging)
     (wrap-worker)
     (handler/site)))
