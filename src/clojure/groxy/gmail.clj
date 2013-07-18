@@ -140,7 +140,7 @@
             (new-store-for email token)))
     (new-store-for email token)))
 
-(defn- folder-for* [folder-name email token]
+(defn- folder-for [folder-name email token]
   (let [folder (.getFolder
                  (store-for email token)
                  folder-name
@@ -148,9 +148,11 @@
     (.open folder (Folder/READ_ONLY))
     folder))
 
-(def allmail-for (partial folder-for* "[Gmail]/All Mail"))
+(def allmail
+  (partial folder-for "[Gmail]/All Mail"))
 
-(def inbox-for (partial folder-for* "INBOX"))
+(def inbox*
+  (partial folder-for "INBOX"))
 
 ;; Search
 ;; ------
@@ -172,18 +174,18 @@
 ;; Public
 ;; ------
 
-(def inbox (folder-search inbox-for))
+(def inbox (folder-search inbox*))
 
-(def search (folder-search allmail-for))
+(def search (folder-search allmail))
 
 (defn message [email token messageid]
   (id2map
     email
-    (allmail-for email token)
+    (allmail email token)
     messageid))
 
 (defn attachment [email token messageid attachmentid]
-  (let [message (imap/message (allmail-for email token) messageid)
+  (let [message (imap/message (allmail email token) messageid)
         attachment (nth (attachments-for message)
                         (dec attachmentid))]
     {:body (content-stream-for attachment)}))
