@@ -148,9 +148,10 @@
   `(let [~folder (.getFolder (store-for ~email ~token)
                              ~folder-name)]
      (.open ~folder (Folder/READ_ONLY))
-     (let [result# (do ~@body)]
-       (.close ~folder false)
-       result#)))
+     (try
+       (do ~@body)
+       (finally
+         (.close ~folder false)))))
 
 (defn search-folder [folder-name]
   (fn [email token query]
