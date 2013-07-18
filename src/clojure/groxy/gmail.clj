@@ -12,6 +12,10 @@
            (com.sun.mail.imap IMAPMessage IMAPFolder IMAPBodyPart)
            (com.boxuk.groxy GmailSearchCommand)))
 
+(def FOLDER_ALL_MAIL "[Gmail]/All Mail")
+
+(def FOLDER_INBOX "INBOX")
+
 (def MAX_SEARCH_RESULTS 20)
 
 (def error-message {:from "error@example.com"
@@ -161,19 +165,20 @@
 ;; Public
 ;; ------
 
-(def inbox (search-folder "INBOX"))
+(def inbox (search-folder FOLDER_INBOX))
 
-(def search (search-folder "[Gmail]/All Mail"))
+(def search (search-folder FOLDER_ALL_MAIL))
 
 (defn message [email token messageid]
-  (id2map
-    email
-    (allmail email token)
-    messageid))
+  (folder-for FOLDER_ALL_MAIL email token
+    allmail
+    (id2map email allmail messageid)))
 
 (defn attachment [email token messageid attachmentid]
-  (let [message (imap/message (allmail email token) messageid)
-        attachment (nth (attachments-for message)
-                        (dec attachmentid))]
-    {:body (content-stream-for attachment)}))
+  (folder-for FOLDER_ALL_MAIL email token
+    allmail
+    (let [message (imap/message allmail messageid)
+          attachment (nth (attachments-for message)
+                          (dec attachmentid))]
+      {:body (content-stream-for attachment)})))
 
