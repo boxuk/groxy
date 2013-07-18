@@ -140,43 +140,30 @@
             (new-store-for email token)))
     (new-store-for email token)))
 
-(defn- folder-for [folder-name email token]
-  (let [folder (.getFolder
-                 (store-for email token)
-                 folder-name
-                 )]
-    (.open folder (Folder/READ_ONLY))
-    folder))
+(defmacro folder-for [folder-name email token folder & body]
+  `(let [~folder (.getFolder (store-for ~email ~token)
+                             ~folder-name)]
+     (.open ~folder (Folder/READ_ONLY))
+     (let [result# (do ~@body)]
+       (.close ~folder false)
+       result#)))
 
-(def allmail
-  (partial folder-for "[Gmail]/All Mail"))
-
-(def inbox*
-  (partial folder-for "INBOX"))
-
-;; Search
-;; ------
-
-(defn- search* [email folder query]
-  (let [command (GmailSearchCommand. (.getFullName folder) query)
-        response (.doCommand folder command)
-        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
-    (doall
-      (map (partial id2map email folder) ids))))
-
-(defn folder-search [get-folder]
+(defn search-folder [folder-name]
   (fn [email token query]
-    (let [folder (get-folder email token)
-          results (search* email folder query)]
-      (.close folder false)
-      results)))
+    (folder-for folder-name email token
+      folder
+      (let [command (GmailSearchCommand. (.getFullName folder) query)
+            response (.doCommand folder command)
+            ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
+        (doall
+          (map (partial id2map email folder) ids))))))
 
 ;; Public
 ;; ------
 
-(def inbox (folder-search inbox*))
+(def inbox (search-folder "INBOX"))
 
-(def search (folder-search allmail))
+(def search (search-folder "[Gmail]/All Mail"))
 
 (defn message [email token messageid]
   (id2map
