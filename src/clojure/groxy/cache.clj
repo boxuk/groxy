@@ -4,7 +4,8 @@
   (:require [clojure.core.cache :as cache]))
 
 (def cache-store
-  (atom (cache/fifo-cache-factory {})))
+  (atom (cache/fifo-cache-factory
+          {:threshold 1000})))
 
 ;; Public
 ;; ------
