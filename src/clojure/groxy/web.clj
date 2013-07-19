@@ -88,6 +88,7 @@
 
 (defroutes www-routes
   (GET "/" [] www-index)
+  (GET "/release-version" [] (slurp "release-version"))
   (route/resources "/assets"))
 
 (defroutes api-routes
