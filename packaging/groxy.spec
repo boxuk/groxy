@@ -29,6 +29,7 @@ rm -rf $RPM_BUILD_ROOT
 
 mkdir -p $RPM_BUILD_ROOT%{_prefix}/%{name}/bin
 cp target/%{name} $RPM_BUILD_ROOT%{_prefix}/%{name}/bin/
+echo %{_ver} > $RPM_BUILD_ROOT%{_prefix}/%{name}/release-version
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d/
 cp %{_sourcedir}/chkconfig.conf $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
@@ -45,6 +46,7 @@ exit 0
 %defattr(-,root,root,-)
 %attr(0755, root, root) /etc/init.d/%{name}
 %attr(0744, root, root) %{_prefix}/%{name}/bin/%{name}
+%attr(0744, root, root) %{_prefix}/%{name}/release-version
 
 %pretrans
 if [ -f %{_prefix}/%{name}/bin/%{name} ]; then
