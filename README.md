@@ -3,8 +3,6 @@
 
 A JSON API proxy for talking to Gmail.  Allows using persistent IMAP connections for non-resident scripting languages.
 
-There is [literate documentation](http://boxuk.github.com/groxy/) available.
-
 ## Usage
 
 Clone the repo and start the application.
@@ -88,6 +86,11 @@ messageid - The ID of the attachments message
 attachmentid - The ID of the attachment to fetch
 ```
 
+## Gmail Folder Names
+
+For the 'All Mail' folder Groxy currently uses '[Gmail]/All Mail' - which will be incorrect
+for Google Mail accounts (and possibly others) which use '[Google Mail]/All Mail'.
+
 ## Access Tokens
 
 Obtaining and refreshing access tokens is not handled by Groxy, you need to do this yourself.
@@ -154,4 +157,8 @@ lein bin
 
 The task will output the name of the executable built, but it should be _target/groxy-VERSION_
 
+## Box UK
+
+ * [Packaging](docs/packaging.md)
+ * [Statistics](docs/statistics.md)
 
