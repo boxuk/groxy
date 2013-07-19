@@ -20,6 +20,8 @@
 
 (defn server []
   (merge (stats/general)
-         {:cache {:items (count (keys @cache/cache-store))}
+         {:version (System/getProperty "groxy.version")
+          :release-version (slurp "release-version")
+          :cache {:items (count (keys @cache/cache-store))}
           :stores (store-summary)}))
 
