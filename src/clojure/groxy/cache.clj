@@ -5,7 +5,8 @@
 
 (def cache-store
   (atom (cache/fifo-cache-factory
-          {:threshold 1000})))
+          {}
+          :threshold 1000)))
 
 ;; Public
 ;; ------
