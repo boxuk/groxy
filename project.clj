@@ -5,6 +5,7 @@
                  [compojure "1.1.5"]
                  [enlive "1.0.1"]
                  [rodnaph/confo "0.7.0"]
+                 [rodnaph/cail "0.4.1"]
                  [javax.mail/mail "1.4.7"]
                  [boxuk/wrap-worker "0.2.0"]
                  [rodnaph/fisher "0.2.0"]

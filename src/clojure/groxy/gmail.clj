@@ -1,11 +1,12 @@
 
 (ns groxy.gmail
   (:use [clojure.tools.logging :only [info]])
-  (:require [groxy.data :as data]
-            [groxy.imap :as imap]
+  (:require [groxy.imap :as imap]
             [groxy.cache :as cache]
+            [cail.core :as cail]
             [clojure.java.io :as io]
             [clojure.string :as string]
+            [clojure.tools.logging :refer [info]]
             [ring.util.response :as response])
   (:import (javax.mail FetchProfile FetchProfile$Item Folder Multipart)
            (javax.mail.internet MimeMultipart)
@@ -13,68 +14,11 @@
            (com.boxuk.groxy GmailSearchCommand)))
 
 (def FOLDER_ALL_MAIL "[Gmail]/All Mail")
-
-(def FOLDER_INBOX "INBOX")
-
 (def MAX_SEARCH_RESULTS 20)
 
-(def error-message {:from "error@example.com"
-                    :subject "Error parsing message"
-                    :attachments []})
+(def folders (atom {}))
 
-;; Message Parsing
-;; ---------------
-
-(defn- content-type [part]
-  (let [ct (.getContentType part)]
-    (if (.contains ct ";")
-      (.toLowerCase (.substring ct 0 (.indexOf ct ";")))
-      "text/plain")))
-
-(defn- is-plain-text [^IMAPMessage msg]
-  (let [ct (content-type msg)]
-    (or (= "text/plain" ct)
-        (= "text/html" ct))))
-
-(defn- mime-parts [^IMAPMessage msg]
-  (let [multipart (.getContent msg)]
-    (for [i (range 0 (.getCount multipart))]
-      (.getBodyPart multipart i))))
-
-(defn- text-message [contents]
-  (->> contents
-       (filter string?)
-       (first)))
-
-(defn- html-message [contents]
-  (if-let [part  (->> contents
-                      (filter #(instance? MimeMultipart %))
-                      (filter #(= "multipart/alternative" (content-type %)))
-                      (first))]
-    (.getContent
-      (.getBodyPart part 1))))
-
-(defn- message-body [^IMAPMessage msg]
-  (let [c (.getContent msg)]
-    (if (instance? Multipart c)
-      (let [contents (->> (mime-parts msg)
-                          (map #(.getContent %)))]
-        (if-let [html (html-message contents)]
-          html
-          (text-message contents)))
-      (str c))))
-
-(defn- email2map [email]
-  (let [[_ from address] (re-matches #"(.*)?<(.*)>" (.toString email))]
-    {:name (string/trim (str from))
-     :address address}))
-
-;; Attachments
-;; -----------
-
-(defn- attachment2map [^IMAPBodyPart attachment]
-  {:name (.getFileName attachment)
-   :content-type (content-type attachment)})
+(def dmap (comp doall map))
 
 (defn- with-id
   "Add an incrememting ID to each attachment"
@@ -85,101 +29,67 @@
            :id
            (inc (count acc)))))
 
-(defn- is-attachment? [^IMAPMessage msg]
-  (and (not (is-plain-text msg))
-       (not (= "multipart/alternative" (content-type msg)))))
-
-(defn- attachments-for [^IMAPMessage msg]
-  (->> (mime-parts msg)
-       (filter is-attachment?)))
-
-(defn- attachments [^IMAPMessage msg]
-  (if (is-plain-text msg)
-    []
-    (->> (attachments-for msg)
-         (map attachment2map)
-         (reduce with-id []))))
-
-(defn- message2map [^IMAPMessage msg]
-  (try
-    {:id (.getMessageNumber msg)
-     :from (email2map (first (.getFrom msg)))
-     :subject (.getSubject msg)
-     :body (message-body msg)
-     :attachments (attachments msg)}
-    (catch Exception e
-      (merge error-message
-             {:id (.getMessageNumber msg)
-              :body (.getMessage e)}))))
+(defn- with-attachment-ids [msg]
+  (assoc
+    msg
+    :attachments
+    (reduce with-id [] (:attachments msg))))
 
 (defn- id2map [email ^IMAPFolder folder id]
   (cache/with-key
     (cache/create-key email "-" id)
-    (message2map (imap/message folder id))))
+      (->> (imap/message folder id)
+           (cail/message->map)
+           (with-attachment-ids))))
 
-(defn- content-stream-for
-  [attachment]
-  (let [stream (.getContent attachment)]
-    (if (= MimeMultipart (class stream))
-      ""
-      stream)))
-
-;; Store/Folder Handling
+;; Folder Handling
 ;; ---------------------
 
-(defn- new-store-for [email token]
-  (let [new-store (imap/store email token)]
-    (info {:type "store.create"
-           :email email})
-    (dosync
-      (alter data/stores assoc-in [email :store] new-store))
-    new-store))
+(defn- open-folder [email token folder-name]
+  (info {:type "folder.open"
+         :email email
+         :folder-name folder-name})
+  (let [folder (.getFolder (imap/store email token) folder-name)]
+    (.open folder Folder/READ_ONLY)
+    (swap! folders assoc-in [email folder-name] folder)
+    folder))
 
-(defn- store-for [email token]
-  (if-let [store (get-in @data/stores [email :store])]
-    (if (.isConnected store)
-        store
-        (do (info {:type "store.close"
-                   :email email}) (.close store)
-            (new-store-for email token)))
-    (new-store-for email token)))
-
-(defmacro folder-for [folder-name email token folder & body]
-  `(let [~folder (.getFolder (store-for ~email ~token)
-                             ~folder-name)]
-     (.open ~folder (Folder/READ_ONLY))
-     (try
-       (do ~@body)
-       (finally
-         (.close ~folder false)))))
-
-(defn search-folder [folder-name]
-  (fn [email token query]
-    (folder-for folder-name email token
+(defn- get-folder [email token folder-name]
+  (if-let [folder (get-in @folders [email folder-name])]
+    (if (.isOpen folder)
       folder
-      (let [command (GmailSearchCommand. folder-name query)
+      (open-folder email token folder-name))
+    (open-folder email token folder-name)))
+
+(defn search-folder
+  ([] (search-folder ""))
+  ([message-filter]
+    (fn [email token query]
+      (let [folder (get-folder email token FOLDER_ALL_MAIL)
+            message-query (str message-filter " " query)
+            command (GmailSearchCommand. FOLDER_ALL_MAIL message-query)
             response (.doCommand folder command)
             ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
-        (doall
-          (map (partial id2map email folder) ids))))))
+        (dmap (partial id2map email folder) ids)))))
 
 ;; Public
 ;; ------
 
-(def inbox (search-folder FOLDER_INBOX))
+(def inbox (search-folder "label:inbox"))
 
-(def search (search-folder FOLDER_ALL_MAIL))
+(def search (search-folder))
 
 (defn message [email token messageid]
-  (folder-for FOLDER_ALL_MAIL email token
-    allmail
+  (let [allmail (get-folder email token FOLDER_ALL_MAIL)]
     (id2map email allmail messageid)))
 
 (defn attachment [email token messageid attachmentid]
-  (folder-for FOLDER_ALL_MAIL email token
-    allmail
-    (let [message (imap/message allmail messageid)
-          attachment (nth (attachments-for message)
-                          (dec attachmentid))]
-      {:body (content-stream-for attachment)})))
+  (let [allmail (get-folder email token FOLDER_ALL_MAIL)
+        message (imap/message allmail messageid)
+        attachment (cail/with-content-stream
+                     (cail/message->attachment message (dec attachmentid)))]
+      (-> (:content-stream attachment)
+          (response/response)
+          (response/content-type
+            (:content-type attachment)))))
 
