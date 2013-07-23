@@ -1,12 +1,13 @@
 
 (ns groxy.cache
   (:use [clojure.tools.logging :only [info]])
-  (:require [clojure.core.cache :as cache]))
+  (:require [groxy.config :refer [config]]
+            [clojure.core.cache :as cache]))
 
 (def cache-store
   (atom (cache/lru-cache-factory
           {}
-          :threshold 1000)))
+          :threshold (:cachesize config))))
 
 ;; Public
 ;; ------

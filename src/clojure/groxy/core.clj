@@ -1,17 +1,11 @@
 
 (ns groxy.core
-  (:use confo.core
-        clojure.tools.logging
+  (:use clojure.tools.logging
         clj-logging-config.log4j
         [ring.adapter.jetty :only [run-jetty]])
-  (:require [groxy.web :as web])
+  (:require [groxy.config :refer [config]]
+            [groxy.web :as web])
   (:gen-class))
-
-(def config (confo :groxy
-                   :logfile "logs/access.log"
-                   :loglevel :debug
-                   :logpattern "%d [%c: %l %n] %m\n"
-                   :port 4545))
 
 (defn configure-logging []
   (set-logger! "groxy"
