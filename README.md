@@ -74,7 +74,7 @@ folder - The name of the folder to use
 GET /api/messages/:messageid/attachments/:attachmentid
 ```
 
-You will also need specify the specified parameters.  This will stream back the
+You will also need specify the following parameters.  This will stream back the
 raw content for the attachment.
 
 ```
@@ -147,7 +147,7 @@ build an executable:
 lein bin
 ```
 
-The task will output the name of the executable built, but it should be _target/groxy-VERSION_
+The task will output the name of the executable built, but it should be _target/groxy_
 
 ## Box UK
 
