@@ -1,5 +1,5 @@
 
-(defproject groxy "0.3.0"
+(defproject groxy "0.4.0"
   :description "Gmail OAuth proxy API"
   :dependencies [[org.clojure/clojure "1.5.0"]
                  [compojure "1.1.5"]
