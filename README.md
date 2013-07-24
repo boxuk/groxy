@@ -21,29 +21,23 @@ http://localhost:4545
 
 ## Endpoints
 
-All endpoints require you send the following parameters:
+All endpoints (except _/api_) require you send the following parameters:
 
 ```
 email - Your Gmail email address
 access_token - A valid OAuth access token
 ```
 
+By default For the 'All Mail' folder Groxy uses '[Gmail]/All Mail' - which will be incorrect
+for Google Mail accounts (and possibly others) which use '[Google Mail]/All Mail'.
+
+To specify another folder to use the _folder_ parameter to give its name.  But be aware
+that the message IDs returned are folder specific, so you'll need to use these consistently.
+
 ### API Status
 
 ```
 GET /api
-```
-
-### Inbox
-
-```
-GET /api/inbox
-```
-
-With parameters:
-
-```
-query - Your query string (supports X-GM-RAW extension)
 ```
 
 ### Searching
@@ -58,6 +52,7 @@ With parameters:
 
 ```
 query - Your query string (supports X-GM-RAW extension)
+folder - The name of the folder to use
 ```
 
 ### Single Messages
@@ -70,6 +65,7 @@ With parameters:
 
 ```
 messageid - The ID of the message to fetch
+folder - The name of the folder to use
 ```
 
 ### Attachments
@@ -84,12 +80,8 @@ raw content for the attachment.
 ```
 messageid - The ID of the attachments message
 attachmentid - The ID of the attachment to fetch
+folder - The name of the folder to use
 ```
-
-## Gmail Folder Names
-
-For the 'All Mail' folder Groxy currently uses '[Gmail]/All Mail' - which will be incorrect
-for Google Mail accounts (and possibly others) which use '[Google Mail]/All Mail'.
 
 ## Access Tokens
 

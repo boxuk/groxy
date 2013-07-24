@@ -38,31 +38,23 @@
            (cail/message->map)
            (with-attachment-ids))))
 
-(defn- search-folder
-  ([] (search-folder ""))
-  ([message-filter]
-    (fn [email token query]
-      (let [folder (imap/folder email token FOLDER_ALL_MAIL)
-            message-query (str message-filter " " query)
-            command (GmailSearchCommand. FOLDER_ALL_MAIL message-query)
-            response (.doCommand folder command)
-            ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
-        (dmap (partial id2map email folder) ids)))))
-
 ;; Public
 ;; ------
 
-(def inbox (search-folder "label:inbox"))
+(defn search [email token folder-name query]
+  (let [folder (imap/folder email token FOLDER_ALL_MAIL)
+        command (GmailSearchCommand. FOLDER_ALL_MAIL query)
+        response (.doCommand folder command)
+        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
+    (dmap (partial id2map email folder) ids)))
 
-(def search (search-folder))
+(defn message [email token folder-name messageid]
+  (let [folder (imap/folder email token FOLDER_ALL_MAIL)]
+    (id2map email folder messageid)))
 
-(defn message [email token messageid]
-  (let [allmail (imap/folder email token FOLDER_ALL_MAIL)]
-    (id2map email allmail messageid)))
-
-(defn attachment [email token messageid attachmentid]
-  (let [allmail (imap/folder email token FOLDER_ALL_MAIL)
-        message (.getMessage allmail messageid)
+(defn attachment [email token folder-name messageid attachmentid]
+  (let [folder (imap/folder email token FOLDER_ALL_MAIL)
+        message (.getMessage folder messageid)
         attachment (cail/with-content-stream
                      (cail/message->attachment message (dec attachmentid)))]
       (-> (:content-stream attachment)

@@ -43,6 +43,9 @@
   (-> (response (json/generate-string body))
       (content-type "application/json")))
 
+(defn folder [params]
+  (get params :folder gmail/FOLDER_ALL_MAIL))
+
 ;; WWW Pages
 ;; ---------
 
@@ -55,18 +58,12 @@
   (json-response
     (stats/server)))
 
-(defhandler api-inbox [{:keys [params]}]
-  (json-response
-    (gmail/inbox
-      (:email params)
-      (:access_token params)
-      (:query params))))
-
 (defhandler api-search [{:keys [params]}]
   (json-response
     (gmail/search
       (:email params)
       (:access_token params)
+      (folder params)
       (:query params))))
 
 (defhandler api-message [{:keys [params]}]
@@ -74,12 +71,14 @@
     (gmail/message
       (:email params)
       (:access_token params)
+      (folder params)
       (->int (:messageid params)))))
 
 (defhandler api-attachment [{:keys [params]}]
   (gmail/attachment
     (:email params)
     (:access_token params)
+    (folder params)
     (->int (:messageid params))
     (->int (:attachmentid params))))
 
@@ -94,7 +93,6 @@
 (defroutes api-routes
   (context "/api" []
     (GET "/" [] api-stats)
-    (GET "/inbox" [] api-inbox)
     (GET "/messages" [] api-search)
     (GET "/messages/:messageid" [] api-message)
     (GET "/messages/:messageid/attachments/:attachmentid" [] api-attachment)))
