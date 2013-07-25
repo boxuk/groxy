@@ -21,6 +21,6 @@
   :java-source-paths ["src/java"]
   :ring {:handler groxy.web/app}
   :bin {:name "groxy"}
-  :jvm-opts ["-Xmx32m"]
+  :jvm-opts ["-Xmx64m"]
   :main groxy.core)
 
