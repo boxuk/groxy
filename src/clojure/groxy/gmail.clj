@@ -9,10 +9,9 @@
             [clojure.tools.logging :refer [info]]
             [ring.util.response :as response])
   (:import (com.sun.mail.imap IMAPFolder)
-           (com.boxuk.groxy GmailSearchCommand)))
+           (com.boxuk.groxy.gmail SearchCommand ThreadCommand)))
 
 (def FOLDER_ALL_MAIL "[Gmail]/All Mail")
-(def MAX_SEARCH_RESULTS 20)
 
 (def dmap (comp doall map))
 
@@ -31,32 +30,40 @@
     :attachments
     (reduce with-id [] (:attachments msg))))
 
-(defn- id2map [email ^IMAPFolder folder id]
+(defn- id->map [email ^IMAPFolder folder id]
   (cache/with-key
     (cache/create-key email "-" id)
       (->> (.getMessage folder id)
            (cail/message->map)
            (with-attachment-ids))))
 
+(defn message-command [email token folder-name command]
+  (let [folder (imap/folder email token folder-name)
+        ids (.doCommand folder command)]
+    (dmap (partial id->map email folder) ids)))
+
 ;; Public
 ;; ------
 
 (defn search [email token folder-name query]
-  (let [folder (imap/folder email token FOLDER_ALL_MAIL)
-        command (GmailSearchCommand. FOLDER_ALL_MAIL query)
-        response (.doCommand folder command)
-        ids (take MAX_SEARCH_RESULTS (.getMessageIds response))]
-    (dmap (partial id2map email folder) ids)))
+  (message-command
+    email token folder-name
+    (SearchCommand. folder-name query)))
 
-(defn message [email token folder-name messageid]
-  (let [folder (imap/folder email token FOLDER_ALL_MAIL)]
-    (id2map email folder messageid)))
+(defn thread [email token folder-name message-id]
+  (message-command
+    email token folder-name
+    (ThreadCommand. folder-name message-id)))
 
-(defn attachment [email token folder-name messageid attachmentid]
-  (let [folder (imap/folder email token FOLDER_ALL_MAIL)
-        message (.getMessage folder messageid)
+(defn message [email token folder-name message-id]
+  (let [folder (imap/folder email token folder-name)]
+    (id->map email folder message-id)))
+
+(defn attachment [email token folder-name message-id attachment-id]
+  (let [folder (imap/folder email token folder-name)
+        message (.getMessage folder message-id)
         attachment (cail/with-content-stream
-                     (cail/message->attachment message (dec attachmentid)))]
+                     (cail/message->attachment message (dec attachment-id)))]
       (-> (:content-stream attachment)
           (response/response)
           (response/content-type
