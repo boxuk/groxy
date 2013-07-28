@@ -1,13 +1,17 @@
 
 (ns groxy.cache
-  (:use [clojure.tools.logging :only [info]])
   (:require [groxy.config :refer [config]]
-            [clojure.core.cache :as cache]))
+            [clojure.core.cache :as cache]
+            [clj-statsd :as s]))
 
 (def cache-store
   (atom (cache/lru-cache-factory
           {}
           :threshold (:cachesize config))))
+
+(defn metric [id]
+  (s/increment id)
+  (s/gauge :cache-size (count (keys @cache-store))))
 
 ;; Public
 ;; ------
@@ -18,13 +22,11 @@
   `(if (cache/has? @cache-store
                     ~cache-id)
       (do
-        (info {:type "cache.hit"
-               :key ~cache-id})
+        (metric :cache-hit)
         (get (cache/hit @cache-store ~cache-id)
              ~cache-id))
       (do
-        (info {:type "cache.miss"
-               :key ~cache-id})
+        (metric :cache-miss)
         (let [cache-data# (do ~@body)]
           (reset! cache-store
                   (cache/miss @cache-store

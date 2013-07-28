@@ -9,7 +9,8 @@
                        [route :as route])
             [cheshire.core :as json]
             [groxy.gmail :as gmail]
-            [groxy.stats :as stats]))
+            [groxy.stats :as stats]
+            [clj-statsd :as s]))
 
 (defn ->int [i]
   (Integer/parseInt i))
@@ -23,6 +24,7 @@
        (do ~@body)
        (catch Exception e#
          (let [msg# (.getMessage e#)]
+           (s/increment :exception-count)
            (error {:type "error"
                    :message msg#
                    :stack (map str (.getStackTrace e#))})
@@ -31,13 +33,9 @@
 
 (defn wrap-logging [handler]
   (fn [req]
-    (let  [start-time (millis)
-           res (handler req)]
-      (info (merge {:type "request"
-                    :start-time start-time
-                    :total-time (- (millis) start-time)}
-                   (select-keys req [:request-method :uri :params])))
-      res)))
+    (s/increment :request-count)
+    (s/with-timing :request-time
+      (handler req))))
 
 (defn json-response [body]
   (-> (response (json/generate-string body))
@@ -59,28 +57,34 @@
     (stats/server)))
 
 (defhandler api-search [{:keys [params]}]
-  (json-response
-    (gmail/search
-      (:email params)
-      (:access_token params)
-      (folder params)
-      (:query params))))
+  (s/increment :api-search)
+  (s/with-timing :api-search-time
+    (json-response
+      (gmail/search
+        (:email params)
+        (:access_token params)
+        (folder params)
+        (:query params)))))
 
 (defhandler api-message [{:keys [params]}]
-  (json-response
-    (gmail/message
+  (s/increment :api-message)
+  (s/with-timing :api-message-time
+    (json-response
+      (gmail/message
+        (:email params)
+        (:access_token params)
+        (folder params)
+        (->int (:messageid params))))))
+
+(defhandler api-attachment [{:keys [params]}]
+  (s/increment :api-attachment)
+  (s/with-timing :api-attachment-time
+    (gmail/attachment
       (:email params)
       (:access_token params)
       (folder params)
-      (->int (:messageid params)))))
-
-(defhandler api-attachment [{:keys [params]}]
-  (gmail/attachment
-    (:email params)
-    (:access_token params)
-    (folder params)
-    (->int (:messageid params))
-    (->int (:attachmentid params))))
+      (->int (:messageid params))
+      (->int (:attachmentid params)))))
 
 ;; Routes
 ;; ------

@@ -20,7 +20,8 @@
 (defn configure-statsd []
   (s/setup
     (:statsd-host config)
-    (:statsd-port config)))
+    (:statsd-port config)
+    :prefix "groxy."))
 
 (defn start []
   (configure-logging)
