@@ -14,5 +14,8 @@ pom.xml.asc
 .lein-repl-history
 /nbproject/private/
 /build/
+/build.xml
+/manifest.mf
+/nbproject
 .DS_Store
 lein
