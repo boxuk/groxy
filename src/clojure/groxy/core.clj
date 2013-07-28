@@ -4,7 +4,8 @@
         clj-logging-config.log4j
         [ring.adapter.jetty :only [run-jetty]])
   (:require [groxy.config :refer [config]]
-            [groxy.web :as web])
+            [groxy.web :as web]
+            [clj-statsd :as s])
   (:gen-class))
 
 (defn configure-logging []
@@ -16,8 +17,14 @@
                       (:logfile config)
                       true)))
 
+(defn configure-statsd []
+  (s/setup
+    (:statsd-host config)
+    (:statsd-port config)))
+
 (defn start []
   (configure-logging)
+  (configure-statsd)
   (run-jetty web/app config))
 
 (defn -main []

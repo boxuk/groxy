@@ -6,9 +6,15 @@
 ;; ------
 
 (def config (confo :groxy
+                   ;; Server
+                   :port 4545
+                   ;; Logging
                    :logfile "logs/access.log"
                    :loglevel :debug
                    :logpattern "%d [%c: %l %n] %m\n"
-                   :port 4545
-                   :cachesize 1000))
+                   ;; Caching
+                   :cachesize 1000
+                   ;; StatsD
+                   :statsd-host "localhost"
+                   :statsd-port 8125))
 
