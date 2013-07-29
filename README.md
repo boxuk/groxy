@@ -151,6 +151,7 @@ The task will output the name of the executable built, but it should be _target/
 
 ## Box UK
 
+ * [Configuration](docs/configuration.md)
  * [Packaging](docs/packaging.md)
  * [Statistics](docs/statistics.md)
 
