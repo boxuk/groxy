@@ -1,13 +1,13 @@
 Summary:       Gmail API Proxy
 Name:          groxy
 Version:       %{_ver}
-Release:       2
+Release:       3
 BuildArch:     noarch
 Group:         Internet / Applications
 Vendor:        Box UK
 License:       GPL, MIT
 Source:        %{name}-%{version}.tar.gz
-Source1:	   chkconfig.conf
+Source1:	   initd.conf
 AutoReqProv:   no
 
 BuildRequires: java-1.6.0-openjdk-devel, boxuk-leiningen
@@ -31,7 +31,7 @@ mkdir -p $RPM_BUILD_ROOT%{_prefix}/%{name}/bin
 cp target/%{name} $RPM_BUILD_ROOT%{_prefix}/%{name}/bin/
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d/
-cp %{_sourcedir}/chkconfig.conf $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
+cp %{_sourcedir}/initd.conf $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
 
 chmod 755 $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
 
@@ -43,6 +43,7 @@ exit 0
 
 %files
 %defattr(-,root,root,-)
+%{_prefix}/%{name}
 %attr(0755, root, root) /etc/init.d/%{name}
 %attr(0744, root, root) %{_prefix}/%{name}/bin/%{name}
 
@@ -55,4 +56,4 @@ fi
 %posttrans
 service groxy start
 chkconfig groxy on
- 
+
