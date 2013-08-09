@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+app_root=$( readlink -f $( dirname $0 )/.. )
+
+app_pkg=$( rpm -qf $app_root --queryformat='%{name}' )
+pushd /
+yum update -y $app_pkg
+popd
