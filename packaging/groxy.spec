@@ -7,7 +7,7 @@ Group:         Internet / Applications
 Vendor:        Box UK
 License:       GPL, MIT
 Source:        %{name}-%{version}.tar.gz
-Source1:	   initd.conf
+Source1:       initd.conf
 Source2:       update_app
 AutoReqProv:   no
 
