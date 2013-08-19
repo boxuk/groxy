@@ -31,7 +31,7 @@ rm -rf $RPM_BUILD_ROOT
 
 mkdir -p $RPM_BUILD_ROOT%{_prefix}/%{name}/bin
 cp target/%{name} $RPM_BUILD_ROOT%{_prefix}/%{name}/bin/
-echo %{_ver} > $RPM_BUILD_ROOT%{_prefix}/%{name}/release-version
+echo -n %{_ver} > $RPM_BUILD_ROOT%{_prefix}/%{name}/release-version
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d/
 cp %{_sourcedir}/initd.conf $RPM_BUILD_ROOT%{_sysconfdir}/init.d/%{name}
