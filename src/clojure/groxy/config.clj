@@ -16,5 +16,10 @@
                    :cachesize 1000
                    ;; StatsD
                    :statsd-host "localhost"
-                   :statsd-port 8125))
+                   :statsd-port 8125
+                   ;; Database cache
+                   :db-cache-type nil
+                   :db-cache-dsn "//127.0.0.1:3307/db_name"
+                   :db-cache-user "root"
+                   :db-cache-pass ""))
 
