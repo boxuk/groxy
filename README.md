@@ -107,6 +107,20 @@ GROXY_LOGLEVEL="debug"
 GROXY_LOGPATTERN="%d %m"
 ```
 
+## Caching
+
+By default Groxy will cache messages in memory using an LRU cache.  To enable
+a database cache (via JDBC) you can configure it as follows...
+
+```
+GROXY_DB_CACHE_TYPE="mysql"
+GROXY_DB_CACHE_DSN="//127.0.0.1:3306/db_name"
+GROXY_DB_CACHE_USER="root"
+GROXY_DB_CACHE_PASS=""
+```
+
+This will provide a [durable cache](docs/dbcache.md) that survives restarts.
+
 ## Logging
 
 Logging is configured to use log4j, and writes to the log file configured by _GROXY_LOGFILE_.

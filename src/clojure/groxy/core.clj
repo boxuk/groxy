@@ -4,6 +4,7 @@
         clj-logging-config.log4j
         [ring.adapter.jetty :only [run-jetty]])
   (:require [groxy.config :refer [config]]
+            [groxy.cache :refer [db-cache!]]
             [groxy.web :as web]
             [clj-statsd :as s])
   (:gen-class))
@@ -23,9 +24,18 @@
     (:statsd-port config)
     :prefix "groxy."))
 
+(defn configure-cache []
+  (if-let [db-type (:db-cache-type config)]
+    (db-cache!
+      {:subprotocol db-type
+       :subname (:db-cache-dsn config)
+       :user (:db-cache-user config)
+       :password (:db-cache-pass config)})))
+
 (defn start []
   (configure-logging)
   (configure-statsd)
+  (configure-cache)
   (run-jetty web/app config))
 
 (defn -main []
