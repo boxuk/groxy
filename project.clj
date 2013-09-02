@@ -14,6 +14,8 @@
                  [clj-logging-config "1.9.10"]
                  [org.clojure/tools.logging "0.2.6"]
                  [org.clojure/core.cache "0.6.3"]
+                 [org.clojure/java.jdbc "0.3.0-alpha4"]
+                 [mysql/mysql-connector-java "5.1.26"]
                  [clj-statsd "0.3.9"]]
   :plugins [[lein-marginalia "0.7.1"]
             [lein-ring "0.8.3"]
