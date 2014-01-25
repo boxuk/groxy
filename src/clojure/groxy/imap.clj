@@ -1,9 +1,10 @@
+
 (ns groxy.imap
-  (:use [clojure.tools.logging :only [info]])
   (:import (com.google.code.samples.oauth2 OAuth2SaslClientFactory OAuth2Authenticator)
            (java.util Properties)
            (javax.mail Session Folder)
-           (com.sun.mail.imap IMAPSSLStore)))
+           (com.sun.mail.imap IMAPSSLStore))
+  (:require [clojure.tools.logging :refer [info]]))
 
 (OAuth2Authenticator/initialize)
 
