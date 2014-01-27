@@ -1,16 +1,13 @@
 
 (ns groxy.cache.db
   (:require [clojure.core.cache :refer [defcache CacheProtocol]]
-            [clojure.java.jdbc :refer [query insert!]]
-            [clojure.java.jdbc.sql :refer [select where]]))
+            [clojure.java.jdbc :refer [query insert!]]))
 
 (def cache-table :groxy_cache)
 
 (defn find-row [db id]
-  (query db
-         (select :data
-                 cache-table
-                 (where {:id (name id)}))))
+  (let [sql (format "select id from %s where id = ?" (name cache-table))]
+    (query db [sql (name id)])))
 
 (defn lookup
   ([db id] (lookup db id nil))
