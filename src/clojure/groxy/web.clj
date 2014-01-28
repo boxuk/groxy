@@ -1,16 +1,16 @@
 
 (ns groxy.web
-  (:use compojure.core
-        [clojure.tools.logging :only [info error]]
-        [ring.util.response :only [response content-type status]]
-        [net.cgrand.enlive-html :only [deftemplate]]
-        [wrap-worker.core :only [wrap-worker]])
-  (:require (compojure [handler :as handler]
-                       [route :as route])
-            [cheshire.core :as json]
+  (:require [groxy.metrics :refer [wrap-metrics]]
             [groxy.gmail :as gmail]
             [groxy.stats :as stats]
-            [clj-statsd :as s]))
+            [compojure.core :refer :all]
+            (compojure [handler :as handler]
+                       [route :as route])
+            [cheshire.core :as json]
+            [clojure.tools.logging :refer [info error]]
+            [ring.util.response :refer [response content-type status]]
+            [net.cgrand.enlive-html :refer [deftemplate]]
+            [wrap-worker.core :refer [wrap-worker]]))
 
 (defn ->int [i]
   (Integer/parseInt i))
@@ -24,18 +24,11 @@
        (do ~@body)
        (catch Exception e#
          (let [msg# (.getMessage e#)]
-           (s/increment :exception-count)
            (error {:type "error"
                    :message msg#
                    :stack (map str (.getStackTrace e#))})
            (status (response {:message msg#})
                    400))))))
-
-(defn wrap-logging [handler]
-  (fn [req]
-    (s/increment :request-count)
-    (s/with-timing :request-time
-      (handler req))))
 
 (defn json-response [body]
   (-> (response (json/generate-string body))
@@ -57,34 +50,28 @@
     (stats/server)))
 
 (defhandler api-search [{:keys [params]}]
-  (s/increment :api-search)
-  (s/with-timing :api-search-time
-    (json-response
-      (gmail/search
-        (:email params)
-        (:access_token params)
-        (folder params)
-        (:query params)))))
-
-(defhandler api-message [{:keys [params]}]
-  (s/increment :api-message)
-  (s/with-timing :api-message-time
-    (json-response
-      (gmail/message
-        (:email params)
-        (:access_token params)
-        (folder params)
-        (->int (:messageid params))))))
-
-(defhandler api-attachment [{:keys [params]}]
-  (s/increment :api-attachment)
-  (s/with-timing :api-attachment-time
-    (gmail/attachment
+  (json-response
+    (gmail/search
       (:email params)
       (:access_token params)
       (folder params)
-      (->int (:messageid params))
-      (->int (:attachmentid params)))))
+      (:query params))))
+
+(defhandler api-message [{:keys [params]}]
+  (json-response
+    (gmail/message
+      (:email params)
+      (:access_token params)
+      (folder params)
+      (->int (:messageid params)))))
+
+(defhandler api-attachment [{:keys [params]}]
+  (gmail/attachment
+    (:email params)
+    (:access_token params)
+    (folder params)
+    (->int (:messageid params))
+    (->int (:attachmentid params))))
 
 ;; Routes
 ;; ------
@@ -112,7 +99,7 @@
 
 (def app
   (-> #'app-routes
-    (wrap-logging)
+    (wrap-metrics)
     (wrap-worker)
     (handler/site)))
 
