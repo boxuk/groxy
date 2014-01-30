@@ -6,7 +6,8 @@
 (def cache-table :groxy_cache)
 
 (defn find-row [db id]
-  (let [sql (format "select id from %s where id = ?" (name cache-table))]
+  (let [sql (format "select id, data from %s where id = ?"
+                    (name cache-table))]
     (query db [sql (name id)])))
 
 (defn lookup
