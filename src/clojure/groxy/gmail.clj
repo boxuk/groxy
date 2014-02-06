@@ -7,7 +7,8 @@
             [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.tools.logging :refer [info]]
-            [ring.util.response :as response])
+            [ring.util.response :as response]
+            [clj-statsd :refer [with-timing]])
   (:import (com.sun.mail.imap IMAPFolder)
            (com.boxuk.groxy GmailSearchCommand)))
 
@@ -34,9 +35,10 @@
 (defn- id2map [email ^IMAPFolder folder id]
   (cache/with-key
     (cache/create-key email "-" id)
-      (->> (.getMessage folder id)
-           (cail/message->map)
-           (with-attachment-ids))))
+      (with-timing :message-fetch
+        (->> (.getMessage folder id)
+             (cail/message->map)
+             (with-attachment-ids)))))
 
 ;; Public
 ;; ------
