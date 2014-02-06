@@ -9,7 +9,8 @@
             [clojure.tools.logging :refer [info]]
             [ring.util.response :as response]
             [clj-statsd :refer [with-timing]])
-  (:import (com.sun.mail.imap IMAPFolder)
+  (:import (javax.mail Message FetchProfile FetchProfile$Item)
+           (com.sun.mail.imap IMAPFolder)
            (com.boxuk.groxy GmailSearchCommand)))
 
 (def FOLDER_ALL_MAIL "[Gmail]/All Mail")
@@ -32,11 +33,19 @@
     :attachments
     (reduce with-id [] (:attachments msg))))
 
+(defn- prefetch [^IMAPFolder folder msg]
+  (let [fp (doto (FetchProfile.)
+             (.add FetchProfile$Item/ENVELOPE)
+             (.add FetchProfile$Item/CONTENT_INFO))]
+    (.fetch folder (into-array Message [msg]) fp)
+    msg))
+
 (defn- id2map [email ^IMAPFolder folder id]
   (cache/with-key
     (cache/create-key email "-" id)
       (with-timing :message-fetch
         (->> (.getMessage folder id)
+             (prefetch folder)
              (cail/message->map)
              (with-attachment-ids)))))
 
