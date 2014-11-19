@@ -73,6 +73,16 @@
     (->int (:messageid params))
     (->int (:attachmentid params))))
 
+(defhandler api-thread [{:keys [params]}]
+  (json-response
+    (s/increment :api-thread)
+    (s/with-timing :api-thread-time
+      (gmail/thread
+        (:email params)
+        (:access_token params)
+        (folder params)
+        (->int (:messageid params))))))
+
 ;; Routes
 ;; ------
 
@@ -86,6 +96,7 @@
     (GET "/" [] api-stats)
     (GET "/messages" [] api-search)
     (GET "/messages/:messageid" [] api-message)
+    (GET "/messages/:messageid/thread" [] api-thread)
     (GET "/messages/:messageid/attachments/:attachmentid" [] api-attachment)))
 
 (defroutes app-routes

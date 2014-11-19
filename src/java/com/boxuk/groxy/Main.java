@@ -1,6 +1,9 @@
 
 package com.boxuk.groxy;
 
+import com.boxuk.groxy.gmail.SearchResponse;
+import com.boxuk.groxy.gmail.SearchCommand;
+import com.boxuk.groxy.gmail.ThreadCommand;
 import com.google.code.samples.oauth2.OAuth2Authenticator;
 import com.google.code.samples.oauth2.OAuth2SaslClientFactory;
 
@@ -73,12 +76,11 @@ public class Main {
             
             System.out.println("Searching for: " +query);
             
-            final GmailSearchCommand search = new GmailSearchCommand(GMAIL_ALL_MAIL, query);
-            
+            final IMAPFolder.ProtocolCommand cmd = new SearchCommand(GMAIL_ALL_MAIL, query);
             final IMAPFolder folder = (IMAPFolder) store.getFolder("Inbox");
-            final GmailSearchResponse response = (GmailSearchResponse) folder.doCommand(search);
+            final int[] ids = (int[]) folder.doCommand(cmd);
             
-            for (int id : response.getMessageIds()) {
+            for (int id : ids) {
                 System.out.println("Message ID: " + id);
             }
             

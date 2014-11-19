@@ -19,3 +19,4 @@ pom.xml.asc
 /nbproject
 .DS_Store
 lein
+release-version
